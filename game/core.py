@@ -7,7 +7,7 @@ class Game:
         self.width = width
         self.height = height
         self.tile = tile
-        self.screen = pygame.display.set_mode((width * tile, height * tile + 40))
+        self.screen = pygame.display.set_mode((width * tile, height * tile + 80))
         pygame.display.set_caption("Tactics Prototype")
         self.clock = pygame.time.Clock()
         self.state = GameState(width, height)
@@ -81,9 +81,16 @@ class Game:
         # status bar: show active unit and AP
         active = self.state.active_unit
         if active:
-            status = f"Active: {active.team} @{active.x},{active.y}  AP: {active.ap}/{active.max_ap}  Init: {active.initiative}  -  Press SPACE to end unit turn"
+            status = f"""
+            Active: {active.team} @{active.x},{active.y}  
+            AP: {active.ap}/{active.max_ap}  Init: {active.initiative}  
+            -  Press SPACE to end unit turn
+            """
         else:
             status = "No active unit"
-        txt = self.font.render(status, True, (220, 220, 220))
+        lines = status.strip().split('\n')
+        #txt = self.font.render(status, True, (220, 220, 220))
         s.fill((40, 40, 40), (0, self.height * self.tile, self.width * self.tile, 40))
-        s.blit(txt, (8, self.height * self.tile + 8))
+        for i, line in enumerate(lines):
+            txt = self.font.render(line.strip(), True, (220, 220, 220))
+            s.blit(txt, (8, self.height * self.tile + 8 + i * 20))
