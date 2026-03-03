@@ -1,13 +1,21 @@
-Simple Pygame demo
+# Pygame Tactics Prototype
 
-- What: Minimal game where you move a square and collect items to increase score.
-- Files: `main.py`, `requirements.txt`
+Minimal, multi-file tactics prototype using only Pygame.
 
-Run (PowerShell):
+Controls
+- Left click: select unit / move to highlighted tile
+- Space: end turn (player -> enemy)
 
-```powershell
-python -m pip install -r requirements.txt
-python main.py
+Run
+1. Create a virtualenv (recommended).
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
 ```
 
-Controls: WASD or arrow keys to move, Esc to quit.
+3. Run:
+
+```bash
+python main.py
+```
