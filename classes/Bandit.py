@@ -2,19 +2,19 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Unit:
+class Bandit:
     x: int
     y: int
     team: str
     move: int = 3
-    hp: int = 10
+    hp: int = 8
     color: tuple = None
     max_ap: int = 3
     ap: int = 0
     initiative: int = 10
     turn_started: bool = False
     move_delay: float = 0.25
-    atk: int = 3
+    atk: int = 2
     atk_range: int = 1
     moves_remaining: int = 0
     attacks_remaining: int = 0

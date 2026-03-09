@@ -3,7 +3,7 @@ from game.state import GameState
 
 
 class Game:
-    def __init__(self, width=8, height=6, tile=64):
+    def __init__(self, width=12, height=8, tile=80):
         self.width = width
         self.height = height
         self.tile = tile
@@ -34,7 +34,8 @@ class Game:
                     self.state.on_click(tx, ty)
             elif ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_SPACE:
-                    self.state.end_unit_turn()
+                    if self.state.current_phase == 'player':
+                        self.state.end_player_phase()
 
     def update(self, dt):
         self.state.update(dt)
@@ -78,14 +79,29 @@ class Game:
             sel = self.state.selected
             rect = pygame.Rect(sel.x * self.tile, sel.y * self.tile, self.tile, self.tile)
             pygame.draw.rect(s, (200, 200, 0), rect, 3)
-        # status bar: show active unit and AP
-        active = self.state.active_unit
-        if active:
-            status = f"""
-            Active: {active.team} @{active.x},{active.y}  
-            AP: {active.ap}/{active.max_ap}  Init: {active.initiative}  
-            -  Press SPACE to end unit turn
-            """
+        # status bar: show active unit and actions
+        if not self.state.game_over:
+            if self.state.current_phase == 'player':
+                # Show player unit info if one is selected
+                if self.state.selected:
+                    u = self.state.selected
+                    status = f"""
+                    Level {self.state.current_level} | PLAYER PHASE | Selected: {u.__class__.__name__} @{u.x},{u.y}  
+                    Moves: {u.moves_remaining}/{u.move}  Attacks: {u.attacks_remaining}/1  
+                    -  Press SPACE to end player phase
+                    """
+                else:
+                    status = f"""
+                    Level {self.state.current_level} | PLAYER PHASE | Click a unit to select
+                    -  Press SPACE to end player phase
+                    """
+            else:
+                status = f"Level {self.state.current_level} | ENEMY PHASE | Enemy turn in progress..."
+        elif self.state.game_over:
+            if self.state.victory:
+                status = f"Level {self.state.current_level} VICTORY! Advancing to next level..."
+            else:
+                status = "DEFEAT! All units lost."
         else:
             status = "No active unit"
         lines = status.strip().split('\n')
@@ -94,3 +110,54 @@ class Game:
         for i, line in enumerate(lines):
             txt = self.font.render(line.strip(), True, (220, 220, 220))
             s.blit(txt, (8, self.height * self.tile + 8 + i * 20))
+        
+        # phase announcements overlay
+        if hasattr(self.state, 'phase_announcement_timer') and self.state.phase_announcement_timer > 0:
+            if self.state.current_phase == 'enemy':
+                # Show "ENEMY PHASE" announcement
+                overlay = pygame.Surface((self.width * self.tile, self.height * self.tile), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 120))
+                s.blit(overlay, (0, 0))
+                
+                big_font = pygame.font.SysFont(None, 96)
+                phase_text = big_font.render("ENEMY PHASE", True, (200, 50, 50))
+                text_rect = phase_text.get_rect(center=(self.width * self.tile // 2, self.height * self.tile // 2))
+                s.blit(phase_text, text_rect)
+            elif self.state.current_phase == 'player':
+                # Show "PLAYER PHASE" announcement
+                overlay = pygame.Surface((self.width * self.tile, self.height * self.tile), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 120))
+                s.blit(overlay, (0, 0))
+                
+                big_font = pygame.font.SysFont(None, 96)
+                phase_text = big_font.render("PLAYER PHASE", True, (50, 150, 255))
+                text_rect = phase_text.get_rect(center=(self.width * self.tile // 2, self.height * self.tile // 2))
+                s.blit(phase_text, text_rect)
+        
+        # victory/defeat overlay
+        if self.state.game_over:
+            overlay = pygame.Surface((self.width * self.tile, self.height * self.tile), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            s.blit(overlay, (0, 0))
+            
+            # big victory/defeat text
+            if self.state.victory:
+                big_font = pygame.font.SysFont(None, 72)
+                victory_text = big_font.render(f"LEVEL {self.state.current_level} VICTORY!", True, (255, 215, 0))
+                text_rect = victory_text.get_rect(center=(self.width * self.tile // 2, self.height * self.tile // 2 - 20))
+                s.blit(victory_text, text_rect)
+                
+                sub_font = pygame.font.SysFont(None, 36)
+                sub_text = sub_font.render("Advancing to next level...", True, (255, 255, 255))
+                sub_rect = sub_text.get_rect(center=(self.width * self.tile // 2, self.height * self.tile // 2 + 30))
+                s.blit(sub_text, sub_rect)
+            else:
+                big_font = pygame.font.SysFont(None, 72)
+                defeat_text = big_font.render("DEFEAT!", True, (200, 50, 50))
+                text_rect = defeat_text.get_rect(center=(self.width * self.tile // 2, self.height * self.tile // 2 - 20))
+                s.blit(defeat_text, text_rect)
+                
+                sub_font = pygame.font.SysFont(None, 36)
+                sub_text = sub_font.render("All units lost!", True, (255, 255, 255))
+                sub_rect = sub_text.get_rect(center=(self.width * self.tile // 2, self.height * self.tile // 2 + 30))
+                s.blit(sub_text, sub_rect)

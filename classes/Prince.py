@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Unit:
+class Prince:
     x: int
     y: int
     team: str
-    move: int = 3
+    move: int = 4
     hp: int = 10
     color: tuple = None
     max_ap: int = 3
