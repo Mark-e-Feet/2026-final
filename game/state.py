@@ -3,6 +3,8 @@ from classes.unit import Unit
 from classes.Prince import Prince
 from classes.Archer import Archer
 from classes.Bandit import Bandit
+from classes.Hose import Hose
+from classes.Knigt import Knigt
 
 class GameState:
     def __init__(self, width, height):
@@ -30,10 +32,15 @@ class GameState:
         if self.current_level == 1:
             self.units.append(Prince(2, 2, 'player'))
             self.units.append(Archer(3, 2, 'player'))
+            
+            
         else:
             # Restore player units with full health for new levels
             self.units.append(Prince(2, 2, 'player', hp=10))
             self.units.append(Archer(3, 2, 'player', hp=8))
+            self.units.append(Hose(4, 2, 'player', hp=9))
+            
+
         
         # Enemy units based on level
         if self.current_level == 1:
@@ -42,12 +49,12 @@ class GameState:
         elif self.current_level == 2:
             self.units.append(Bandit(7, 5, 'enemy'))
             self.units.append(Bandit(9, 6, 'enemy'))
-            self.units.append(Bandit(8, 7, 'enemy'))
+            self.units.append(Knigt(8, 7, 'enemy'))
         elif self.current_level == 3:
             self.units.append(Bandit(6, 4, 'enemy'))
             self.units.append(Bandit(8, 5, 'enemy'))
-            self.units.append(Bandit(9, 6, 'enemy'))
-            self.units.append(Bandit(7, 7, 'enemy'))
+            self.units.append(Knigt(9, 6, 'enemy'))
+            self.units.append(Hose(7, 7, 'enemy'))
         else:
             # Endless mode - add more enemies each level
             num_enemies = min(2 + self.current_level, 8)
@@ -238,6 +245,9 @@ class GameState:
         self.selected = None
         self.highlight_tiles = []
         self.attack_targets = []
+        self.active_enemy = None  # Track which enemy is currently acting
+        self.enemy_movement_timer = 0.0  # Timer to delay enemy movements
+        
         # Reset all enemy actions
         for unit in self.units:
             if unit.team == 'enemy':
@@ -245,6 +255,7 @@ class GameState:
                 unit.ai_target = self.find_nearest_player(unit)
                 unit.enemy_move_cooldown = unit.move_delay
                 unit.has_acted_this_phase = False
+        
         # Start with first enemy
         self.current_enemy_index = 0
         self.enemy_turn_timer = 1.0  # Wait 1 second before first enemy acts
@@ -262,10 +273,15 @@ class GameState:
                 unit.reset_ap()
 
     def update_enemy_ai(self, dt):
-        """Update enemy AI - both enemies move during their respective turns"""
+        """Update enemy AI - enemies move individually with delays"""
         # Wait for enemy turn timer
         if hasattr(self, 'enemy_turn_timer') and self.enemy_turn_timer > 0:
             self.enemy_turn_timer -= dt
+            return
+        
+        # Wait for enemy movement timer to create delays between movements
+        if hasattr(self, 'enemy_movement_timer') and self.enemy_movement_timer > 0:
+            self.enemy_movement_timer -= dt
             return
         
         # Get list of alive enemies
@@ -279,20 +295,26 @@ class GameState:
             return
         
         current_enemy = enemies[self.current_enemy_index]
+        self.active_enemy = current_enemy  # Set as currently acting enemy
         
         # Skip if this enemy has already acted
         if current_enemy.has_acted_this_phase:
             # Move to next enemy after a delay
             self.current_enemy_index += 1
-            self.enemy_turn_timer = 0.5  # 0.5 second delay between enemies
+            self.enemy_turn_timer = 3.0  # 3 second delay between enemies
+            self.enemy_movement_timer = 0.0  # Reset movement timer
+            if self.current_enemy_index < len(enemies):
+                self.active_enemy = enemies[self.current_enemy_index]
+            else:
+                self.active_enemy = None
             return
         
-        # Handle current enemy's turn - allow all enemies to move
+        # Handle current enemy's turn - move enemies one at a time
         for enemy in enemies:
             if enemy.moves_remaining > 0 and enemy.ai_target:
                 enemy.enemy_move_cooldown -= dt
                 if enemy.enemy_move_cooldown <= 0:
-                    # All enemies can move towards their targets
+                    # Move one enemy at a time with delay
                     dx = 0 if enemy.x == enemy.ai_target.x else (1 if enemy.ai_target.x > enemy.x else -1)
                     dy = 0 if enemy.y == enemy.ai_target.y else (1 if enemy.ai_target.y > enemy.y else -1)
                     moved = False
@@ -311,11 +333,13 @@ class GameState:
                             moved = True
                     
                     enemy.enemy_move_cooldown = enemy.move_delay
+                    self.enemy_movement_timer = 0.5  # 0.5 second delay between individual movements
+                    return  # Only move one enemy per update cycle
         
         # Only current enemy can attack
         if current_enemy.moves_remaining <= 0 and current_enemy.attacks_remaining <= 0:
             current_enemy.has_acted_this_phase = True
-            self.enemy_turn_timer = 0.5  # 0.5 second delay before next enemy
+            self.enemy_turn_timer = 3.0  # 3 second delay before next enemy
             return
         
         # Check if current enemy can attack
@@ -325,6 +349,7 @@ class GameState:
                     current_enemy.ai_target.take_damage(current_enemy.atk)
                     self.cleanup_dead()
                     current_enemy.enemy_move_cooldown = current_enemy.move_delay
+                    self.enemy_movement_timer = 1.0  # 1 second delay after attack
 
     def end_player_phase(self):
         """Manually end the player phase"""
@@ -346,7 +371,7 @@ class GameState:
 
 
     def cleanup_dead(self):
-        # Remove units with hp <= 0 and rebuild turn queue
+        # Remove units with hp <= 0
         dead = [u for u in self.units if u.hp <= 0]
         if not dead:
             return
@@ -354,19 +379,11 @@ class GameState:
         self.units = [u for u in self.units if u.hp > 0]
         # check victory conditions
         self.check_victory()
-        # if active unit died, end its turn and advance
-        if self.active_unit and self.active_unit.hp <= 0:
-            self.end_unit_turn()
-            return
-        # otherwise rebuild queue to ensure consistency
-        self.rebuild_queue()
-        # if active unit was removed from queue, pick a valid one
-        if self.active_unit and self.active_unit not in self.turn_queue:
-            if self.turn_queue:
-                self.current_index = 0
-                self.start_unit_turn(self.turn_queue[self.current_index])
-            else:
-                self.active_unit = None
+        # if active enemy died, advance to next enemy
+        if hasattr(self, 'active_enemy') and self.active_enemy and self.active_enemy.hp <= 0:
+            self.active_enemy.has_acted_this_phase = True
+            self.enemy_turn_timer = 3.0  # 3 second delay before next enemy
+            self.active_enemy = None
 
     def check_victory(self):
         if self.game_over:

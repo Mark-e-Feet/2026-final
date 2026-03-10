@@ -79,6 +79,11 @@ class Game:
             sel = self.state.selected
             rect = pygame.Rect(sel.x * self.tile, sel.y * self.tile, self.tile, self.tile)
             pygame.draw.rect(s, (200, 200, 0), rect, 3)
+        # active enemy indicator during enemy phase
+        if hasattr(self.state, 'active_enemy') and self.state.active_enemy:
+            active = self.state.active_enemy
+            rect = pygame.Rect(active.x * self.tile, active.y * self.tile, self.tile, self.tile)
+            pygame.draw.rect(s, (255, 100, 100), rect, 4)  # Red border for active enemy
         # status bar: show active unit and actions
         if not self.state.game_over:
             if self.state.current_phase == 'player':
@@ -97,6 +102,8 @@ class Game:
                     """
             else:
                 status = f"Level {self.state.current_level} | ENEMY PHASE | Enemy turn in progress..."
+                if hasattr(self.state, 'active_enemy') and self.state.active_enemy:
+                    status += f" | Active: {self.state.active_enemy.__class__.__name__}"
         elif self.state.game_over:
             if self.state.victory:
                 status = f"Level {self.state.current_level} VICTORY! Advancing to next level..."
