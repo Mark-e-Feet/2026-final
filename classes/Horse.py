@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Hose(Unit):
+class Horse(Unit):
     move: int = 6
     hp: int = 9
     atk: int = 1

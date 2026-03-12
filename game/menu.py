@@ -13,13 +13,13 @@ class HomeScreen:
         
         # Auto-play story timer
         self.story_timer = 0.0
-        self.story_delay = 3.0  # Wait 3 seconds before showing story
+        self.story_delay = 5.0  # Wait 5 seconds before showing story
         self.showing_story = False
         self.story_started = False
         
         # Story scrolling
         self.story_scroll_offset = 0.0  # Continuous scroll offset
-        self.scroll_speed = 0.5  # Pixels per frame for smooth scrolling
+        self.scroll_speed = 0.1  # Pixels per frame for smooth scrolling
         
         # Fonts
         self.title_font = pygame.font.SysFont(None, 72)
@@ -108,27 +108,14 @@ class HomeScreen:
         
         # Extended story content as continuous text
         story_text = (
-            "THE LEGEND OF THAREN\n\n"
-            "In the land of Tharen there was a great war against the dragons and people. "
-            "The evil sorcerer Malakor, once a trusted advisor to the throne "
-            "has been corrupted by forbidden magic and now seeks to enslave all kingdoms. "
-            "His armies of shadow creatures march upon peaceful villages, "
-            "and the people of Tharen live in fear and despair.\n\n"
-            "But hope remains in the hearts of the brave. "
-            "In the hidden valley of Eldoria, a group of heroes has gathered, "
-            "led by the noble Prince Alaric, heir to the fallen kingdom. "
-            "With him stand the finest warriors: Lyra the Archer, whose arrows "
-            "never miss their mark; Marcus the Mage, master of arcane arts; "
-            "and Borin the Hose, a warrior of unmatched strength.\n\n"
-            "These heroes have sworn an oath to restore light to Tharen, "
-            "to defeat Malakor and break his dark hold over the realm. "
-            "With tactical skill, unwavering courage, and the bonds of friendship, "
-            "they embark on an epic quest that will determine the fate of their world.\n\n"
-            "Their journey will take them through corrupted forests, "
-            "across treacherous mountains, and into the heart of darkness itself. "
-            "They will face impossible odds, make unlikely alliances, "
-            "and discover that the greatest power lies not in magic, but in hope.\n\n"
-            "This is their story...\n\n"
+            "HEROES OF THAREN\n\n"
+            "Ages ago in the land of Tharen there was a great war against the dragons and people."
+            "It was a hard time to live for the people of Tharen.Then five great leaders defeated the dragons and sealed them away."
+            "The people of Tharen made the 5 Leaders into  five kingdoms, "
+            "Gredson,Tyick,Reevin,Soron,and Lackol.It's been many years with no violence then one day Gredson attacked Lackol!"
+            "The other kingdoms live Ready for War at any time.\n\n"
+            "But the young prince of Reevin Tristen Sets out toSoron for help to stop this terrible War and Find the secrets of Gredson."
+            "Tristen  in his party gets attacked by Bandits working for the Gredson Army.\n\n"
             "This is... HEROES OF THAREN\n\n"
             "Press any key to continue..."
         )
@@ -139,7 +126,7 @@ class HomeScreen:
         max_width = clip_rect.width  # Use clip rect width for proper fitting
         
         for line in lines:
-            if line == "THE LEGEND OF THAREN":
+            if line == "HEROES OF THAREN":
                 text = self.title_font.render(line, True, self.title_color)
                 text_rect = text.get_rect(center=(self.width // 2, y_offset))
                 self.screen.blit(text, text_rect)
@@ -339,7 +326,7 @@ class HomeScreen:
                 "• Prince: Balanced fighter",
                 "• Archer: Long-range attacks (3 tiles)",
                 "• Mage: Magical damage dealer",
-                "• Hose: Heavy warrior",
+                "• Horse: Heavy warrior",
                 "",
                 "Press ESC to return to main menu"
             ]

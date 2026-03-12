@@ -263,7 +263,7 @@ class Game:
                 "Prince Alaric stands victorious, his sword still gleaming from the battle. "
                 "Lyra the Archer lowers her bow, a look of relief on her face. "
                 "Marcus the Mage sheathes his staff, the arcane energies now calm. "
-                "And Borin the Hose gives a mighty cheer, his strength having turned the tide.\n\n"
+                "And Borin the Horse gives a mighty cheer, his strength having turned the tide.\n\n"
                 "The people of Tharen emerge from their homes, tentative at first, then celebrating "
                 "in the streets. The darkness that had gripped their realm for so long is finally broken. "
                 "Hope returns to the hearts of the brave, and the realm begins to heal.\n\n"

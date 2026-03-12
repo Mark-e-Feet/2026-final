@@ -3,8 +3,8 @@ from classes.unit import Unit
 from classes.Prince import Prince
 from classes.Archer import Archer
 from classes.Bandit import Bandit
-from classes.Hose import Hose
-from classes.Knigt import Knigt
+from classes.Horse import Horse
+from classes.Knight import Knight
 from classes.Mage import Mage
 from classes.Boss1 import Boss1
 
@@ -41,9 +41,9 @@ class GameState:
             prince = Prince(2, 2, 'player')
             archer = Archer(3, 2, 'player')
             mage = Mage(4, 2, 'player')
-            hose = Hose(5, 2, 'player')    
+            horse = Horse(5, 2, 'player')    
             
-            self.units.extend([prince, archer, mage, hose])
+            self.units.extend([prince, archer, mage, horse])
             
 
         
@@ -54,22 +54,22 @@ class GameState:
         elif self.current_level == 2:
             self.units.append(Bandit(7, 5, 'enemy'))
             self.units.append(Bandit(9, 6, 'enemy'))
-            self.units.append(Knigt(8, 7, 'enemy'))
+            self.units.append(Knight(8, 7, 'enemy'))
         elif self.current_level == 3:
             self.units.append(Bandit(6, 4, 'enemy'))
             self.units.append(Bandit(8, 5, 'enemy'))
-            self.units.append(Knigt(9, 6, 'enemy'))
-            self.units.append(Hose(7, 7, 'enemy'))
+            self.units.append(Knight(9, 6, 'enemy'))
+            self.units.append(Horse(7, 7, 'enemy'))
         elif self.current_level == 4:
-            self.units.append(Knigt(11, 0, 'enemy'))
-            self.units.append(Knigt(11, 1, 'enemy'))
-            self.units.append(Knigt(11, 2, 'enemy'))
-            self.units.append(Knigt(11, 3, 'enemy'))
-            self.units.append(Knigt(11, 4, 'enemy'))
+            self.units.append(Knight(11, 0, 'enemy'))
+            self.units.append(Knight(11, 1, 'enemy'))
+            self.units.append(Knight(11, 2, 'enemy'))
+            self.units.append(Knight(11, 3, 'enemy'))
+            self.units.append(Knight(11, 4, 'enemy'))
         elif self.current_level == 5:
             self.units.append(Boss1(11, 7, 'enemy'))
-            self.units.append(Hose(10, 7, 'enemy'))
-            self.units.append(Hose(11, 6, 'enemy'))
+            self.units.append(Horse(10, 7, 'enemy'))
+            self.units.append(Horse(11, 6, 'enemy'))
 
             
         
