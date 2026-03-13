@@ -15,12 +15,23 @@ def main():
     
     while True:
         # Show home screen
-        should_play = home_screen.run()
-        if not should_play:
+        game_mode = home_screen.run()
+        if not game_mode:
             break
         
-        # Start the game
-        game = Game(screen=screen)
+        # Start the game with appropriate mode
+        if game_mode == "Part 1":
+            game = Game(screen=screen, width=12, height=8)
+            game.enable_scrolling = False
+        elif game_mode == "Part 2":
+            # Start directly at level 6 with expanded battlefield
+            game = Game(screen=screen, width=24, height=16, starting_level=6)
+            game.enable_scrolling = True
+        else:
+            # Default to original for safety
+            game = Game(screen=screen, width=12, height=8)
+            game.enable_scrolling = False
+        
         game.run()
     
     pygame.quit()

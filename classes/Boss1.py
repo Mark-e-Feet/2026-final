@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Boss1(Unit):
-    move: int = 0
+    move: int = 1
     hp: int = 18
     atk: int = 4
     atk_range: int = 3

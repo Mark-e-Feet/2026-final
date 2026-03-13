@@ -1,15 +1,18 @@
 import collections
 from classes.unit import Unit
-from classes.Prince import Prince
+from classes.Tristan import Tristan
 from classes.Archer import Archer
 from classes.Bandit import Bandit
 from classes.Horse import Horse
 from classes.Knight import Knight
 from classes.Mage import Mage
+from classes.Srodman import Srodman
 from classes.Boss1 import Boss1
+from classes.Soldier import Soldier
+from classes.Boss2 import Boss2
 
 class GameState:
-    def __init__(self, width, height):
+    def __init__(self, width, height, starting_level=1):
         self.width = width
         self.height = height
         self.units = []
@@ -17,7 +20,7 @@ class GameState:
         self.highlight_tiles = []
         self.game_over = False
         self.victory = False
-        self.current_level = 1
+        self.current_level = starting_level
         self.current_phase = 'player'  # 'player' or 'enemy'
         self.phase_timer = 0.0
         self.setup_level()
@@ -32,18 +35,24 @@ class GameState:
         
         # Player units (preserve progression across levels)
         if self.current_level == 1:
-            self.units.append(Prince(2, 2, 'player'))
+            self.units.append(Tristan(2, 2, 'player'))
             self.units.append(Archer(3, 2, 'player'))
             self.units.append(Mage(4, 2, 'player'))
         else:
             # For levels > 1, create units with default progression
             # They will be restored from saved progress in next_level()
-            prince = Prince(2, 2, 'player')
+            tristan = Tristan(2, 2, 'player')
             archer = Archer(3, 2, 'player')
             mage = Mage(4, 2, 'player')
             horse = Horse(5, 2, 'player')    
             
-            self.units.extend([prince, archer, mage, horse])
+            # Add units based on level
+            if self.current_level >= 6:  # Level 6+ - get all units
+                srodman = Srodman(6, 2, 'player')
+                knight = Knight(7, 2, 'player')
+                self.units.extend([tristan, archer, mage, horse, srodman, knight])
+            else:
+                self.units.extend([tristan, archer, mage, horse])
             
 
         
@@ -70,6 +79,57 @@ class GameState:
             self.units.append(Boss1(11, 7, 'enemy'))
             self.units.append(Horse(10, 7, 'enemy'))
             self.units.append(Horse(11, 6, 'enemy'))
+        elif self.current_level == 6:
+            # Part 2 - 
+            self.units.append(Srodman(15, 10, 'enemy'))
+            self.units.append(Srodman(18, 12, 'enemy'))
+            self.units.append(Knight(20, 8, 'enemy'))
+            self.units.append(Knight(22, 14, 'enemy'))
+            self.units.append(Horse(16, 13, 'enemy'))
+        elif self.current_level == 7:
+            self.units.append(Horse(23, 1, 'enemy'))
+            self.units.append(Horse(23, 0, 'enemy'))
+            self.units.append(Horse(22, 1, 'enemy'))
+            self.units.append(Horse(22, 0, 'enemy'))
+            self.units.append(Horse(22, 14, 'enemy'))
+            self.units.append(Horse(23, 14, 'enemy'))
+            self.units.append(Horse(22, 15, 'enemy'))
+            self.units.append(Horse(23, 15, 'enemy'))
+        elif self.current_level == 8:
+            self.units.append(Soldier(15, 10, 'enemy'))
+            self.units.append(Archer(18, 12, 'enemy'))
+            self.units.append(Soldier(20, 8, 'enemy'))
+            self.units.append(Knight(22, 14, 'enemy'))
+            self.units.append(Soldier(16, 13, 'enemy'))
+            self.units.append(Horse(16, 3, 'enemy'))
+            self.units.append(Soldier(16, 1, 'enemy'))
+            self.units.append(Srodman(16, 3, 'enemy'))
+        elif self.current_level == 9:
+            self.units.append(Mage(0, 15, 'enemy'))
+            self.units.append(Knight(12, 8, 'enemy'))
+            self.units.append(Mage(23, 0, 'enemy'))
+            self.units.append(Knight(13, 8, 'enemy'))
+            self.units.append(Mage(23, 15, 'enemy'))
+        elif self.current_level == 10:
+            self.units.append(Soldier(23, 0, 'enemy'))
+            self.units.append(Soldier(23, 1, 'enemy'))
+            self.units.append(Soldier(23, 2, 'enemy'))
+            self.units.append(Soldier(23, 3, 'enemy'))
+            self.units.append(Soldier(23, 4, 'enemy'))
+            self.units.append(Soldier(23, 11, 'enemy'))
+            self.units.append(Soldier(23, 12, 'enemy'))
+            self.units.append(Soldier(23, 14, 'enemy'))    
+            self.units.append(Soldier(23, 13, 'enemy'))
+            self.units.append(Soldier(23, 15, 'enemy'))
+        elif self.current_level == 11:
+            self.units.append(Boss2(12, 8, 'enemy'))
+            self.units.append(Mage(10, 6, 'enemy'))
+            self.units.append(Mage(14, 6, 'enemy'))
+            self.units.append(Mage(10, 10, 'enemy'))
+            self.units.append(Mage(14, 10, 'enemy'))
+
+
+
 
             
         

@@ -8,8 +8,8 @@ class HomeScreen:
         self.width = screen.get_width()
         self.height = screen.get_height()
         self.running = True
-        self.selected_option = 0
-        self.options = ["Start Game", "Instructions", "Exit"]
+        self.selected_option = None
+        self.options = ["Part 1", "Part 2", "Instructions", "Exit"]
         
         # Auto-play story timer
         self.story_timer = 0.0
@@ -32,8 +32,12 @@ class HomeScreen:
         self.title_color = (255, 215, 0)
         self.option_color = (255, 255, 255)
         self.selected_color = (100, 150, 255)
+        self.hover_color = (50, 100, 200)  # Blue color for hover
         self.text_color = (200, 200, 200)
         self.story_color = (255, 255, 200)
+        
+        # Track hover state
+        self.hovered_option = None
         
     def draw(self):
         # Background
@@ -61,13 +65,18 @@ class HomeScreen:
             # Menu options
             start_y = 300
             for i, option in enumerate(self.options):
-                color = self.selected_color if i == self.selected_option else self.option_color
+                # Determine color: selected/hover > default
+                if (self.selected_option is not None and i == self.selected_option) or i == self.hovered_option:
+                    color = self.selected_color
+                else:
+                    color = self.option_color
+                    
                 option_text = self.option_font.render(option, True, color)
                 option_rect = option_text.get_rect(center=(self.width // 2, start_y + i * 80))
                 self.screen.blit(option_text, option_rect)
                 
-                # Draw selection indicator
-                if i == self.selected_option:
+                # Draw selection indicator for selected or hovered
+                if (self.selected_option is not None and i == self.selected_option) or i == self.hovered_option:
                     indicator_rect = pygame.Rect(option_rect.left - 40, option_rect.centery - 15, 30, 30)
                     pygame.draw.rect(self.screen, self.selected_color, indicator_rect, 2)
                     pygame.draw.polygon(self.screen, self.selected_color, [
@@ -76,13 +85,9 @@ class HomeScreen:
                         (indicator_rect.left + 22, indicator_rect.centery + 8)
                     ])
             
-            # Instructions preview
-            if self.selected_option == 1:
-                self.draw_instructions_preview()
-            
             # Story timer indicator
             if self.story_timer > 0:
-                timer_text = self.instruction_font.render(f"Story begins in {int(self.story_delay - self.story_timer) + 1}...", True, self.text_color)
+                timer_text = self.instruction_font.render(f"Story begins in {int(self.story_delay - self.story_timer)}...", True, self.text_color)
                 timer_rect = timer_text.get_rect(center=(self.width // 2, self.height - 80))
                 self.screen.blit(timer_text, timer_rect)
             
@@ -114,8 +119,8 @@ class HomeScreen:
             "The people of Tharen made the 5 Leaders into  five kingdoms, "
             "Gredson,Tyick,Reevin,Soron,and Lackol.It's been many years with no violence then one day Gredson attacked Lackol!"
             "The other kingdoms live Ready for War at any time.\n\n"
-            "But the young prince of Reevin Tristen Sets out toSoron for help to stop this terrible War and Find the secrets of Gredson."
-            "Tristen  in his party gets attacked by Bandits working for the Gredson Army.\n\n"
+            "But the young prince of Reevin Tristan Sets out toSoron for help to stop this terrible War and Find the secrets of Gredson."
+            "Tristan  in his party gets attacked by Bandits working for the Gredson Army.\n\n"
             "This is... HEROES OF THAREN\n\n"
             "Press any key to continue..."
         )
@@ -173,6 +178,63 @@ class HomeScreen:
         # Reset clipping region
         self.screen.set_clip(None)
     
+    def draw_original_preview(self):
+        # Semi-transparent overlay for original battlefield info
+        overlay = pygame.Surface((self.width - 200, 250), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        overlay_rect = overlay.get_rect(center=(self.width // 2, self.height // 2 + 50))
+        self.screen.blit(overlay, overlay_rect)
+        
+        info = [
+            "ORIGINAL BATTLEFIELD",
+            "",
+            "• Classic 12x8 grid battlefield",
+            "• Perfect for quick tactical battles",
+            "• No scrolling required",
+            "• Traditional gameplay experience",
+            "",
+            "Recommended for beginners"
+        ]
+        
+        y_offset = overlay_rect.top + 20
+        for line in info:
+            if line == "ORIGINAL BATTLEFIELD":
+                text = self.option_font.render(line, True, self.title_color)
+            else:
+                text = self.instruction_font.render(line, True, self.text_color)
+            text_rect = text.get_rect(center=(self.width // 2, y_offset))
+            self.screen.blit(text, text_rect)
+            y_offset += 25 if line.startswith("•") else 35
+
+    def draw_expanded_preview(self):
+        # Semi-transparent overlay for expanded battlefield info
+        overlay = pygame.Surface((self.width - 200, 280), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        overlay_rect = overlay.get_rect(center=(self.width // 2, self.height // 2 + 50))
+        self.screen.blit(overlay, overlay_rect)
+        
+        info = [
+            "EXPANDED BATTLEFIELD",
+            "",
+            "• Large 24x16 grid battlefield",
+            "• Scroll with WASD or Arrow keys",
+            "• More strategic space for battles",
+            "• Post-boss content available",
+            "• Challenging enemy placements",
+            "",
+            "For experienced players"
+        ]
+        
+        y_offset = overlay_rect.top + 20
+        for line in info:
+            if line == "EXPANDED BATTLEFIELD":
+                text = self.option_font.render(line, True, self.title_color)
+            else:
+                text = self.instruction_font.render(line, True, self.text_color)
+            text_rect = text.get_rect(center=(self.width // 2, y_offset))
+            self.screen.blit(text, text_rect)
+            y_offset += 25 if line.startswith("•") else 35
+
     def draw_instructions_preview(self):
         # Semi-transparent overlay for instructions
         overlay = pygame.Surface((self.width - 200, 300), pygame.SRCALPHA)
@@ -228,16 +290,25 @@ class HomeScreen:
                     self.story_timer = 0.0
                     
                     if event.key == pygame.K_UP:
-                        self.selected_option = (self.selected_option - 1) % len(self.options)
+                        if self.selected_option is None:
+                            self.selected_option = 0
+                        else:
+                            self.selected_option = (self.selected_option - 1) % len(self.options)
                     elif event.key == pygame.K_DOWN:
-                        self.selected_option = (self.selected_option + 1) % len(self.options)
+                        if self.selected_option is None:
+                            self.selected_option = 0
+                        else:
+                            self.selected_option = (self.selected_option + 1) % len(self.options)
                     elif event.key == pygame.K_RETURN:
-                        if self.selected_option == 0:  # Start Game
-                            return "play"
-                        elif self.selected_option == 1:  # Instructions
-                            return "instructions"
-                        elif self.selected_option == 2:  # Exit
-                            return "exit"
+                        if self.selected_option is not None:
+                            if self.selected_option == 0:  # Part 1
+                                return "Part 1"
+                            elif self.selected_option == 1:  # Part 2
+                                return "Part 2"
+                            elif self.selected_option == 2:  # Instructions
+                                return "instructions"
+                            elif self.selected_option == 3:  # Exit
+                                return "exit"
                     elif event.key == pygame.K_ESCAPE:
                         return "exit"
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -250,30 +321,34 @@ class HomeScreen:
                     # Reset story timer on mouse interaction
                     self.story_timer = 0.0
                     
-                    # Check mouse click on menu options
+                    # Check mouse click on menu options and update selection
                     mouse_x, mouse_y = event.pos
                     start_y = 300
                     
                     for i, option in enumerate(self.options):
                         option_rect = pygame.Rect(self.width // 2 - 100, start_y + i * 80 - 24, 200, 48)
                         if option_rect.collidepoint(mouse_x, mouse_y):
-                            if i == 0:  # Start Game
-                                return "play"
-                            elif i == 1:  # Instructions
+                            self.selected_option = i  # Update selection on click
+                            if i == 0:  # Part 1
+                                return "Part 1"
+                            elif i == 1:  # Part 2
+                                return "Part 2"
+                            elif i == 2:  # Instructions
                                 return "instructions"
-                            elif i == 2:  # Exit
+                            elif i == 3:  # Exit
                                 return "exit"
                             break
             elif event.type == pygame.MOUSEMOTION:
                 if not self.showing_story:
-                    # Update selected option based on mouse position
+                    # Update hover state based on mouse position
                     mouse_x, mouse_y = event.pos
                     start_y = 300
                     
+                    self.hovered_option = None  # Reset hover
                     for i, option in enumerate(self.options):
                         option_rect = pygame.Rect(self.width // 2 - 100, start_y + i * 80 - 24, 200, 48)
                         if option_rect.collidepoint(mouse_x, mouse_y):
-                            self.selected_option = i
+                            self.hovered_option = i
                             break
             elif event.type == pygame.MOUSEWHEEL:
                 if self.showing_story:
@@ -311,6 +386,11 @@ class HomeScreen:
                 "• Click red tiles to attack enemies",
                 "• Press SPACE to end your turn",
                 "",
+                "BATTLEFIELD MODES:",
+                "• Original: Classic 12x8 grid, no scrolling",
+                "• Expanded: Large 24x16 grid with scrolling",
+                "• In Expanded mode, use WASD or Arrow keys to scroll",
+                "",
                 "GAMEPLAY:",
                 "• Your units (blue) fight enemies (red)",
                 "• Each unit has movement and attack points",
@@ -333,7 +413,7 @@ class HomeScreen:
             
             y_offset = 140
             for line in instructions:
-                if line in ["HEROES OF THAREN - HOW TO PLAY", "BASIC CONTROLS:", "GAMEPLAY:", "LEVELING SYSTEM:", "UNITS:"]:
+                if line in ["HEROES OF THAREN - HOW TO PLAY", "BASIC CONTROLS:", "BATTLEFIELD MODES:", "GAMEPLAY:", "LEVELING SYSTEM:", "UNITS:"]:
                     text = self.option_font.render(line, True, self.title_color)
                 else:
                     text = self.instruction_font.render(line, True, self.text_color)
@@ -365,8 +445,10 @@ class HomeScreen:
             action = self.handle_events()
             if action == "exit":
                 return False
-            elif action == "play":
-                return True
+            elif action == "Part 1":
+                return "Part 1"
+            elif action == "Part 2":
+                return "Part 2"
             elif action == "instructions":
                 result = self.show_instructions()
                 if result == "exit":
