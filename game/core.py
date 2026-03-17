@@ -41,6 +41,13 @@ class Game:
         self.boss_victory_story_duration = 8.0  # Show for 8 seconds
         self.boss_story_scroll_offset = 0.0
         self.boss_story_scroll_speed = 0.1
+        
+        # Boss 2 victory story system
+        self.boss2_victory_story_active = False
+        self.boss2_victory_story_timer = 0.0
+        self.boss2_victory_story_duration = 8.0  # Show for 8 seconds
+        self.boss2_story_scroll_offset = 0.0
+        self.boss2_story_scroll_speed = 0.1
 
     def get_level_name(self):
         """Get display name for current level"""
@@ -78,6 +85,10 @@ class Game:
                 if self.boss_victory_story_active:
                     self.boss_victory_story_active = False
                     self.state.next_level()
+                # Skip Boss 2 story with any key
+                if self.boss2_victory_story_active:
+                    self.boss2_victory_story_active = False
+                    self.state.next_level()
                 # Handle scrolling when enabled - track key press
                 elif self.enable_scrolling:
                     if ev.key in [pygame.K_LEFT, pygame.K_a, pygame.K_RIGHT, pygame.K_d, pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s]:
@@ -108,11 +119,37 @@ class Game:
             if pygame.K_DOWN in self.keys_pressed or pygame.K_s in self.keys_pressed:
                 self.camera_y = min(max_y, self.camera_y + self.scroll_speed)
         
+        # Track if Level 6 transition has been done
+        self.level_6_transition_done = False
+        
         # Check for boss victory and start story
         if self.state.game_over and self.state.victory and self.state.current_level == 5 and not self.boss_victory_story_active:
             self.boss_victory_story_active = True
             self.boss_victory_story_timer = self.boss_victory_story_duration
             self.boss_story_scroll_offset = 0.0
+        
+        # Check for Boss 2 victory and start story
+        if self.state.game_over and self.state.victory and self.state.current_level == 11 and not self.boss2_victory_story_active:
+            self.boss2_victory_story_active = True
+            self.boss2_victory_story_timer = self.boss2_victory_story_duration
+            self.boss2_story_scroll_offset = 0.0
+        
+        # Check for Level 6 transition to expanded battlefield (only once)
+        if self.state.current_level == 6 and not self.level_6_transition_done and not self.enable_scrolling:
+            # Enable scrolling and expand battlefield
+            self.enable_scrolling = True
+            self.width = 24
+            self.height = 16
+            self.viewport_width = 12  # Keep viewport same size
+            self.viewport_height = 8  # Keep viewport same size
+            # Update state dimensions
+            self.state.width = 24
+            self.state.height = 16
+            # Reset camera position
+            self.camera_x = 0
+            self.camera_y = 0
+            # Mark transition as done
+            self.level_6_transition_done = True
         
         # Update boss victory story
         if self.boss_victory_story_active:
@@ -126,6 +163,21 @@ class Game:
             # End story after duration
             if self.boss_victory_story_timer <= 0:
                 self.boss_victory_story_active = False
+                # Continue with normal level progression
+                self.state.next_level()
+        
+        # Update Boss 2 victory story
+        if self.boss2_victory_story_active:
+            self.boss2_victory_story_timer -= dt
+            self.boss2_story_scroll_offset += self.boss2_story_scroll_speed
+            
+            # Reset scroll when it goes too far
+            if self.boss2_story_scroll_offset > 600:
+                self.boss2_story_scroll_offset = 0.0
+                
+            # End story after duration
+            if self.boss2_victory_story_timer <= 0:
+                self.boss2_victory_story_active = False
                 # Continue with normal level progression
                 self.state.next_level()
 
@@ -330,26 +382,86 @@ class Game:
             self.screen.set_clip(clip_rect)
             
             # Boss victory story content
-            story_text = (
-                "VICTORY!\n\n"
-                "By the time Tristan and his party made it to Soron, it was already attacked by Gredson’s Army! "
-                "They found a few surviving knights who are willing to join Tristan's party"
-                "One of the knights heard of a great sage in Tyick."
-                "This was just a taste of Gredson’s power.If Tristan will want to defeat Gredson’s Army he'll need as much help as he can get."
-                " So Tristan and his party set out to Tyick  in search of the Great Sage.\n\n"
+            story_text = [
+                "VICTORY!",
+                "",
+                "By the time Tristan and his party made it to Soron,",
+                "it was already under attack by Gredson's Army!",
+                "They found a few surviving knights who were willing",
+                "to join Tristan's party.",
+                "",
+                "One of the knights heard of a great sage in Tyick.",
+                "This was just a taste of Gredson's power.",
+                "If Tristan wants to defeat Gredson's Army,",
+                "he'll need as much help as he can get.",
+                "",
+                "So Tristan and his party set out to Tyick",
+                "in search of the Great Sage.",
+                "",
                 "Press any key to continue..."
-            )
+            ]
             
             # Render the story text with scrolling
-            lines = story_text.split('\n')
+            lines = story_text
             y_offset = clip_rect.top - self.boss_story_scroll_offset
             max_width = clip_rect.width
             
             for line in lines:
-                if line == "VICTORY OVER MALAKOR!":
+                if line == "VICTORY!":
                     text = pygame.font.SysFont(None, 48).render(line, True, (255, 215, 0))
-                elif line == "The heroes have saved Tharen... for now.":
-                    text = pygame.font.SysFont(None, 36).render(line, True, (200, 200, 255))
+                elif line == "Press any key to continue...":
+                    text = pygame.font.SysFont(None, 24).render(line, True, (255, 255, 200))
+                else:
+                    text = pygame.font.SysFont(None, 28).render(line, True, (255, 255, 200))
+                
+                text_rect = text.get_rect(center=(self.viewport_width * self.tile // 2, y_offset))
+                self.screen.blit(text, text_rect)
+                y_offset += 35 if line == "" else 40
+            
+            # Reset clipping
+            self.screen.set_clip(None)
+        
+        # Boss 2 victory story overlay
+        if self.boss2_victory_story_active:
+            # Create story overlay
+            story_overlay = pygame.Surface((self.viewport_width * self.tile - 80, self.viewport_height * self.tile - 160), pygame.SRCALPHA)
+            story_overlay.fill((0, 0, 0, 200))
+            story_rect = story_overlay.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2))
+            self.screen.blit(story_overlay, story_rect)
+            
+            # Create clipping region for text
+            clip_rect = pygame.Rect(story_rect.left + 40, story_rect.top + 40, 
+                                   story_rect.width - 80, story_rect.height - 80)
+            self.screen.set_clip(clip_rect)
+            
+            # Boss 2 victory story content
+            story_text = [
+                "VICTORY!",
+                "",
+                "Tristan and his party finally reached the Great Sage of Tyick.",
+                "The sage revealed that Gredson had discovered an ancient power",
+                "that made him nearly unstoppable.",
+                "",
+                "But there was hope - a legendary artifact hidden in the mountains",
+                "of Lackol that could counter Gredson's strength.",
+                "The sage gave Tristan a map and warned that the path would be dangerous,",
+                "filled with Gredson's elite guards.",
+                "",
+                "With new knowledge and determination, Tristan and his companions",
+                "set forth toward Lackol, knowing this could be their final chance",
+                "to save Tharen from darkness.",
+                "",
+                "Press any key to continue..."
+            ]
+            
+            # Render the story text with scrolling
+            lines = story_text
+            y_offset = clip_rect.top - self.boss2_story_scroll_offset
+            max_width = clip_rect.width
+            
+            for line in lines:
+                if line == "VICTORY!":
+                    text = pygame.font.SysFont(None, 48).render(line, True, (255, 215, 0))
                 elif line == "Press any key to continue...":
                     text = pygame.font.SysFont(None, 24).render(line, True, (255, 255, 200))
                 else:
@@ -366,7 +478,7 @@ class Game:
         # This prevents any overlays or clipping from affecting it
         
         # victory/defeat overlay (only show if not in boss story) - don't cover status bar
-        if self.state.game_over and not self.boss_victory_story_active:
+        if self.state.game_over and not self.boss_victory_story_active and not self.boss2_victory_story_active:
             overlay = pygame.Surface((self.viewport_width * self.tile, self.viewport_height * self.tile), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             s.blit(overlay, (0, 0))
@@ -383,13 +495,25 @@ class Game:
                 sub_rect = sub_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 + 30))
                 s.blit(sub_text, sub_rect)
             else:
+                # Check if Tristan was defeated for overlay text
+                tristan_defeated = False
+                for unit in self.state.units:
+                    if unit.__class__.__name__ == 'Tristan' and unit.hp <= 0:
+                        tristan_defeated = True
+                        break
+                
                 big_font = pygame.font.SysFont(None, 72)
-                defeat_text = big_font.render("DEFEAT!", True, (200, 50, 50))
+                if tristan_defeated:
+                    defeat_text = big_font.render("TRISTAN DEFEATED!", True, (200, 50, 50))
+                    sub_text = sub_font.render("The hero has fallen...", True, (255, 255, 255))
+                else:
+                    defeat_text = big_font.render("DEFEAT!", True, (200, 50, 50))
+                    sub_text = sub_font.render("All units lost!", True, (255, 255, 255))
+                
                 text_rect = defeat_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 - 20))
                 s.blit(defeat_text, text_rect)
                 
                 sub_font = pygame.font.SysFont(None, 36)
-                sub_text = sub_font.render("All units lost!", True, (255, 255, 255))
                 sub_rect = sub_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 + 30))
                 s.blit(sub_text, sub_rect)
         
@@ -417,7 +541,17 @@ class Game:
             if self.state.victory:
                 status = f"{self.get_level_name()} VICTORY! Advancing to next level..."
             else:
-                status = "DEFEAT! All units lost."
+                # Check if Tristan was defeated
+                tristan_defeated = False
+                for unit in self.state.units:
+                    if unit.__class__.__name__ == 'Tristan' and unit.hp <= 0:
+                        tristan_defeated = True
+                        break
+                
+                if tristan_defeated:
+                    status = "DEFEAT! Tristan defeated!"
+                else:
+                    status = "DEFEAT! All units lost."
         else:
             status = "No active unit"
         

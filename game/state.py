@@ -399,6 +399,10 @@ class GameState:
 
     def update_enemy_ai(self, dt):
         """Update enemy AI - all enemies can end turn by attacking or choice"""
+        # Check if camera is positioning (pause enemy actions)
+        if hasattr(self, 'pause_enemy_action') and self.pause_enemy_action:
+            return  # Don't update enemy AI while camera is moving
+        
         # Get list of alive enemies
         enemies = [u for u in self.units if u.team == 'enemy' and u.hp > 0]
         if not enemies:
@@ -450,40 +454,75 @@ class GameState:
                             return
                 
                 # Try to move towards target
-                if hasattr(current_enemy, 'moves_remaining') and current_enemy.moves_remaining > 0 and hasattr(current_enemy, 'ai_target') and current_enemy.ai_target:
-                    dx = 0 if current_enemy.x == current_enemy.ai_target.x else (1 if current_enemy.ai_target.x > current_enemy.x else -1)
-                    dy = 0 if current_enemy.y == current_enemy.ai_target.y else (1 if current_enemy.ai_target.y > current_enemy.y else -1)
-                    moved = False
+                if hasattr(current_enemy, 'moves_remaining') and current_enemy.moves_remaining > 0:
+                    # Find target if doesn't have one or target is dead
+                    if not hasattr(current_enemy, 'ai_target') or not current_enemy.ai_target or current_enemy.ai_target.hp <= 0:
+                        current_enemy.ai_target = self.find_nearest_player(current_enemy)
                     
-                    # Try horizontal movement first
-                    if dx != 0:
-                        nx, ny = current_enemy.x + dx, current_enemy.y
-                        occupying_unit = self.unit_at(nx, ny)
-                        # Allow moving through same-team units but prevent landing on same spot
-                        if (occupying_unit is None or occupying_unit == current_enemy) and self.in_bounds(nx, ny):
-                            current_enemy.x, current_enemy.y = nx, ny
-                            current_enemy.moves_remaining -= 1
-                            moved = True
-                    
-                    # Try vertical movement if horizontal didn't work
-                    if not moved and dy != 0:
-                        nx, ny = current_enemy.x, current_enemy.y + dy
-                        occupying_unit = self.unit_at(nx, ny)
-                        # Allow moving through same-team units but prevent landing on same spot
-                        if (occupying_unit is None or occupying_unit == current_enemy) and self.in_bounds(nx, ny):
-                            current_enemy.x, current_enemy.y = nx, ny
-                            current_enemy.moves_remaining -= 1
-                            moved = True
-                    
-                    if moved:
-                        # Check if can attack after moving
-                        if self.can_attack_target(current_enemy, current_enemy.ai_target):
-                            if hasattr(current_enemy, 'spend_attack') and current_enemy.spend_attack():
-                                current_enemy.ai_target.take_damage(current_enemy.atk)
-                                self.cleanup_dead()
+                    if current_enemy.ai_target:
+                        dx = 0 if current_enemy.x == current_enemy.ai_target.x else (1 if current_enemy.ai_target.x > current_enemy.x else -1)
+                        dy = 0 if current_enemy.y == current_enemy.ai_target.y else (1 if current_enemy.ai_target.y > current_enemy.y else -1)
+                        moved = False
+                        
+                        # Try horizontal movement first
+                        if dx != 0:
+                            nx, ny = current_enemy.x + dx, current_enemy.y
+                            occupying_unit = self.unit_at(nx, ny)
+                            # Allow moving through same-team units but prevent landing on same spot
+                            if (occupying_unit is None or occupying_unit == current_enemy) and self.in_bounds(nx, ny):
+                                current_enemy.x, current_enemy.y = nx, ny
+                                current_enemy.moves_remaining -= 1
+                                moved = True
+                        
+                        # Try vertical movement if horizontal didn't work
+                        if not moved and dy != 0:
+                            nx, ny = current_enemy.x, current_enemy.y + dy
+                            occupying_unit = self.unit_at(nx, ny)
+                            # Allow moving through same-team units but prevent landing on same spot
+                            if (occupying_unit is None or occupying_unit == current_enemy) and self.in_bounds(nx, ny):
+                                current_enemy.x, current_enemy.y = nx, ny
+                                current_enemy.moves_remaining -= 1
+                                moved = True
+                        
+                        if moved:
+                            # Check if can attack after moving
+                            if self.can_attack_target(current_enemy, current_enemy.ai_target):
+                                if hasattr(current_enemy, 'spend_attack') and current_enemy.spend_attack():
+                                    current_enemy.ai_target.take_damage(current_enemy.atk)
+                                    self.cleanup_dead()
+                                    if hasattr(current_enemy, 'has_acted_this_phase'):
+                                        current_enemy.has_acted_this_phase = True
+                                    # Move to next enemy immediately
+                                    self.current_enemy_index += 1
+                                    if self.current_enemy_index < len(enemies):
+                                        self.active_enemy = enemies[self.current_enemy_index]
+                                        self.active_enemy.enemy_move_cooldown = 0.5
+                                    else:
+                                        self.active_enemy = None
+                                    return
+                            
+                            # Reset cooldown for next action
+                            current_enemy.enemy_move_cooldown = 0.3
+                        else:
+                            # Can't move (blocked), try to attack if in range
+                            if current_enemy.ai_target and self.can_attack_target(current_enemy, current_enemy.ai_target):
+                                if hasattr(current_enemy, 'spend_attack') and current_enemy.spend_attack():
+                                    current_enemy.ai_target.take_damage(current_enemy.atk)
+                                    self.cleanup_dead()
+                                    if hasattr(current_enemy, 'has_acted_this_phase'):
+                                        current_enemy.has_acted_this_phase = True
+                                    # Move to next enemy immediately
+                                    self.current_enemy_index += 1
+                                    if self.current_enemy_index < len(enemies):
+                                        self.active_enemy = enemies[self.current_enemy_index]
+                                        self.active_enemy.enemy_move_cooldown = 0.5
+                                    else:
+                                        self.active_enemy = None
+                                    return
+                            else:
+                                # Can't move or attack, end turn
                                 if hasattr(current_enemy, 'has_acted_this_phase'):
                                     current_enemy.has_acted_this_phase = True
-                                # Move to next enemy immediately
                                 self.current_enemy_index += 1
                                 if self.current_enemy_index < len(enemies):
                                     self.active_enemy = enemies[self.current_enemy_index]
@@ -491,11 +530,8 @@ class GameState:
                                 else:
                                     self.active_enemy = None
                                 return
-                        
-                        # Reset cooldown for next action
-                        current_enemy.enemy_move_cooldown = 0.3
                     else:
-                        # Can't move (blocked), end turn
+                        # No target available, end turn
                         if hasattr(current_enemy, 'has_acted_this_phase'):
                             current_enemy.has_acted_this_phase = True
                         self.current_enemy_index += 1
@@ -575,11 +611,19 @@ class GameState:
         enemies = [u for u in self.units if u.team == 'enemy' and u.hp > 0]
         players = [u for u in self.units if u.team == 'player' and u.hp > 0]
         
+        # Check if Tristan is still alive
+        tristan_alive = False
+        for unit in players:
+            if unit.__class__.__name__ == 'Tristan':
+                tristan_alive = True
+                break
+        
         if not enemies:
             # Victory! Advance to next level after a short delay
             self.game_over = True
             self.victory = True
             self.victory_timer = 2.0  # Show victory for 2 seconds
-        elif not players:
+        elif not players or not tristan_alive:
+            # Defeat! Either no players left or Tristan was defeated
             self.game_over = True
             self.victory = False
