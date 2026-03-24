@@ -3,10 +3,10 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Archer(Unit):
-    move: int = 3
-    hp: int = 8
-    atk: int = 3
+class Horsearcher(Unit):
+    move: int = 6
+    hp: int = 7
+    atk: int = 1
     atk_range: int = 3
 
     def __post_init__(self):

@@ -95,7 +95,8 @@ class Unit:
             return
             
         self.exp += amount
-        # Check for level up
+        
+        # Check for level up - allow multiple level-ups per turn
         while self.exp >= self.exp_to_next_level:
             self.level_up()
 
@@ -105,23 +106,32 @@ class Unit:
         self.exp -= self.exp_to_next_level
         self.exp_to_next_level = int(self.exp_to_next_level * 1.5)  # Increase exp requirement
         
-        # Improve stats
-        hp_increase = max(1, int(self.base_hp * 0.1))  # 10% of base HP
-        atk_increase = max(1, int(self.base_atk * 0.15))  # 15% of base attack
+        # Check if unit has enhanced stats from Part 2/Part 3
+        enhanced_stats = getattr(self, '_enhanced_stats', False)
         
+        # Improve stats - use enhanced base if available, otherwise use normal calculation
+        if enhanced_stats:
+            # Unit has enhanced stats from Part 2/Part 3, use normal level-up formula
+            hp_increase = max(1, int(self.base_hp * 0.1))  # 10% of base HP
+            atk_increase = max(1, int(self.base_atk * 0.15))  # 15% of base attack
+        else:
+            # Normal unit - use enhanced base stats
+            hp_increase = max(1, int(self.hp * 0.1))  # 10% of current HP
+            atk_increase = max(1, int(self.atk * 0.15))  # 15% of current attack
+            
         self.base_hp += hp_increase
         self.base_atk += atk_increase
-        
-        # Apply new stats
-        self.max_hp = self.base_hp
-        self.hp = self.max_hp  # Full heal on level up
-        self.atk = self.base_atk
         
         # Increase movement every 3 levels
         if self.level % 3 == 0:
             self.base_move += 1
-            self.move = self.base_move
-            self.moves_remaining = self.move
+        
+        # Apply ALL new stats - this was the missing part!
+        self.max_hp = self.base_hp
+        self.hp = self.max_hp  # Full heal on level up
+        self.atk = self.base_atk
+        self.move = self.base_move
+        self.moves_remaining = self.move
         
         # Set level up announcement flag
         self.level_up_announcement = True
@@ -132,3 +142,30 @@ class Unit:
         base_exp = 5
         level_bonus = self.level * 2
         return base_exp + level_bonus
+
+    def set_level(self, target_level: int):
+        """Set unit to a specific level (for enemy units)"""
+        if target_level < 1:
+            return
+            
+        # Set level directly
+        self.level = target_level
+        
+        # Calculate stats based on target level
+        # HP: +10% per level
+        hp_bonus = (target_level - 1) * int(self.base_hp * 0.1)
+        self.max_hp = self.base_hp + hp_bonus
+        self.hp = self.max_hp  # Full health
+        
+        # Attack: +15% per level
+        atk_bonus = (target_level - 1) * int(self.base_atk * 0.15)
+        self.atk = self.base_atk + atk_bonus
+        
+        # Movement: +1 every 3 levels
+        move_bonus = ((target_level - 1) // 3)
+        self.move = self.base_move + move_bonus
+        self.moves_remaining = self.move
+        
+        # Set experience for current level
+        self.exp = 0
+        self.exp_to_next_level = target_level * 10

@@ -9,7 +9,7 @@ class HomeScreen:
         self.height = screen.get_height()
         self.running = True
         self.selected_option = None
-        self.options = ["Part 1", "Part 2", "Instructions", "Exit"]
+        self.options = ["Part 1", "Part 2", "Part 3", "Instructions", "Exit"]
         
         # Auto-play story timer
         self.story_timer = 0.0
@@ -305,9 +305,11 @@ class HomeScreen:
                                 return "Part 1"
                             elif self.selected_option == 1:  # Part 2
                                 return "Part 2"
-                            elif self.selected_option == 2:  # Instructions
+                            elif self.selected_option == 2:  # Part 3
+                                return "Part 3"
+                            elif self.selected_option == 3:  # Instructions
                                 return "instructions"
-                            elif self.selected_option == 3:  # Exit
+                            elif self.selected_option == 4:  # Exit
                                 return "exit"
                     elif event.key == pygame.K_ESCAPE:
                         return "exit"
@@ -333,9 +335,11 @@ class HomeScreen:
                                 return "Part 1"
                             elif i == 1:  # Part 2
                                 return "Part 2"
-                            elif i == 2:  # Instructions
+                            elif i == 2:  # Part 3
+                                return "Part 3"
+                            elif i == 3:  # Instructions
                                 return "instructions"
-                            elif i == 3:  # Exit
+                            elif i == 4:  # Exit
                                 return "exit"
                             break
             elif event.type == pygame.MOUSEMOTION:
@@ -396,18 +400,6 @@ class HomeScreen:
                 "• Each unit has movement and attack points",
                 "• Defeat all enemies to advance to next level",
                 "",
-                "LEVELING SYSTEM:",
-                "• Units gain EXP by defeating enemies",
-                "• Level up increases HP and ATK",
-                "• Every 3 levels, units gain +1 movement",
-                "• Unit progression carries over between levels",
-                "",
-                "UNITS:",
-                "• Prince: Balanced fighter",
-                "• Archer: Long-range attacks (3 tiles)",
-                "• Mage: Magical damage dealer",
-                "• Horse: Heavy warrior",
-                "",
                 "Press ESC to return to main menu"
             ]
             
@@ -449,6 +441,8 @@ class HomeScreen:
                 return "Part 1"
             elif action == "Part 2":
                 return "Part 2"
+            elif action == "Part 3":
+                return "Part 3"
             elif action == "instructions":
                 result = self.show_instructions()
                 if result == "exit":

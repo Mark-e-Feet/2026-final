@@ -19,13 +19,17 @@ def main():
         if not game_mode:
             break
         
-        # Start the game with appropriate mode
+        # Start game with appropriate mode
         if game_mode == "Part 1":
             game = Game(screen=screen, width=12, height=8)
             game.enable_scrolling = False
         elif game_mode == "Part 2":
             # Start directly at level 6 with expanded battlefield
             game = Game(screen=screen, width=24, height=16, starting_level=6)
+            game.enable_scrolling = True
+        elif game_mode == "Part 3":
+            # Start directly at level 12 with ultra-expanded battlefield
+            game = Game(screen=screen, width=12, height=24, starting_level=12)
             game.enable_scrolling = True
         else:
             # Default to original for safety

@@ -10,6 +10,11 @@ from classes.Srodman import Srodman
 from classes.Boss1 import Boss1
 from classes.Soldier import Soldier
 from classes.Boss2 import Boss2
+from classes.Ballistician import Ballistician
+from classes.Healer import Healer
+from classes.Horsearcher import Horsearcher
+from classes.Darkmage import Darkmage
+from classes.Boss3 import Boss3
 
 class GameState:
     def __init__(self, width, height, starting_level=1):
@@ -23,7 +28,35 @@ class GameState:
         self.current_level = starting_level
         self.current_phase = 'player'  # 'player' or 'enemy'
         self.phase_timer = 0.0
+        self.terrain = []  # Store terrain layout
         self.setup_level()
+
+    def load_terrain(self, level_num):
+        """Load terrain layout from file"""
+        try:
+            terrain_file = f"Levels/level_{level_num}.txt"
+            with open(terrain_file, 'r') as f:
+                lines = f.readlines()
+                self.terrain = []
+                for line in lines:
+                    row = []
+                    for char in line.strip():
+                        if char == 'G':
+                            row.append('grass')
+                        elif char == 'D':
+                            row.append('dirt')
+                        elif char == 'C':
+                            row.append('castle')
+                        elif char == 'R':
+                            row.append('road')
+                        elif char == 'B':
+                            row.append('destroyed_house')
+                        else:
+                            row.append('grass')  # Default to grass
+                    self.terrain.append(row)
+        except FileNotFoundError:
+            # Create default grass terrain if file not found
+            self.terrain = [['grass' for _ in range(self.width)] for _ in range(self.height)]
 
     def setup_level(self):
         """Setup units for the current level"""
@@ -32,6 +65,13 @@ class GameState:
         self.victory = False
         self.current_phase = 'player'
         self.phase_timer = 0.0
+        
+        # Load terrain for levels 1, 2, 3, 4, 5, and 6
+        if self.current_level <= 6:
+            self.load_terrain(self.current_level)
+        else:
+            # Default grass terrain for higher levels
+            self.terrain = [['grass' for _ in range(self.width)] for _ in range(self.height)]
         
         # Player units (preserve progression across levels)
         if self.current_level == 1:
@@ -51,7 +91,21 @@ class GameState:
                 srodman = Srodman(6, 2, 'player')
                 knight = Knight(7, 2, 'player')
                 self.units.extend([tristan, archer, mage, horse, srodman, knight])
-            else:
+                
+                # Set specific levels for Part 2 start
+                if self.current_level == 6:
+                    self.setup_part2_levels()
+                    
+            if self.current_level >= 12:  # Level 12+ - get 3 new units
+                healer = Healer(8, 2, 'player')
+                horsearcher = Horsearcher(9, 2, 'player')
+                ballistician = Ballistician(10, 2, 'player')
+                self.units.extend([tristan, archer, mage, horse, srodman, knight, healer, horsearcher, ballistician])
+                
+                # Set specific levels for Part 3 start
+                if self.current_level == 12:
+                    self.setup_part3_levels()
+            elif self.current_level < 6:
                 self.units.extend([tristan, archer, mage, horse])
             
 
@@ -80,13 +134,14 @@ class GameState:
             self.units.append(Horse(10, 7, 'enemy'))
             self.units.append(Horse(11, 6, 'enemy'))
         elif self.current_level == 6:
-            # Part 2 - 
+            # Part 2
             self.units.append(Srodman(15, 10, 'enemy'))
             self.units.append(Srodman(18, 12, 'enemy'))
             self.units.append(Knight(20, 8, 'enemy'))
             self.units.append(Knight(22, 14, 'enemy'))
             self.units.append(Horse(16, 13, 'enemy'))
         elif self.current_level == 7:
+            # Part 2
             self.units.append(Horse(23, 1, 'enemy'))
             self.units.append(Horse(23, 0, 'enemy'))
             self.units.append(Horse(22, 1, 'enemy'))
@@ -96,6 +151,7 @@ class GameState:
             self.units.append(Horse(22, 15, 'enemy'))
             self.units.append(Horse(23, 15, 'enemy'))
         elif self.current_level == 8:
+            # Part 2
             self.units.append(Soldier(15, 10, 'enemy'))
             self.units.append(Archer(18, 12, 'enemy'))
             self.units.append(Soldier(20, 8, 'enemy'))
@@ -105,12 +161,14 @@ class GameState:
             self.units.append(Soldier(16, 1, 'enemy'))
             self.units.append(Srodman(16, 3, 'enemy'))
         elif self.current_level == 9:
+            # Part 2
             self.units.append(Mage(0, 15, 'enemy'))
             self.units.append(Knight(12, 8, 'enemy'))
             self.units.append(Mage(23, 0, 'enemy'))
             self.units.append(Knight(13, 8, 'enemy'))
             self.units.append(Mage(23, 15, 'enemy'))
         elif self.current_level == 10:
+            # Part 2
             self.units.append(Soldier(23, 0, 'enemy'))
             self.units.append(Soldier(23, 1, 'enemy'))
             self.units.append(Soldier(23, 2, 'enemy'))
@@ -122,19 +180,359 @@ class GameState:
             self.units.append(Soldier(23, 13, 'enemy'))
             self.units.append(Soldier(23, 15, 'enemy'))
         elif self.current_level == 11:
+            # Part 2
             self.units.append(Boss2(12, 8, 'enemy'))
             self.units.append(Mage(10, 6, 'enemy'))
             self.units.append(Mage(14, 6, 'enemy'))
             self.units.append(Mage(10, 10, 'enemy'))
             self.units.append(Mage(14, 10, 'enemy'))
+        elif self.current_level == 12:
+            # Part 3
+            self.units.append(Soldier(3, 21, 'enemy'))
+            self.units.append(Soldier(5, 20, 'enemy'))
+            self.units.append(Soldier(8, 21, 'enemy'))
+            self.units.append(Horse(2, 19, 'enemy'))
+            self.units.append(Horsearcher(9, 19, 'enemy'))
+            self.units.append(Healer(5, 21, 'enemy'))
+            self.units.append(Healer(5, 22, 'enemy'))
+            self.units.append(Knight(0, 19, 'enemy'))
+            self.units.append(Knight(11, 19, 'enemy'))
+            self.units.append(Srodman(0, 21, 'enemy'))
+            self.units.append(Srodman(11, 21, 'enemy'))
+        elif self.current_level == 13:
+            # Part 3
+            self.units.append(Horse(2, 19, 'enemy'))
+            self.units.append(Horse(9, 19, 'enemy'))
+            self.units.append(Horse(5, 20, 'enemy'))
+            self.units.append(Horse(5, 21, 'enemy'))
+            self.units.append(Srodman(5, 23, 'enemy'))  # Fixed: was y=27, now y=23
+            self.units.append(Healer(5, 21, 'enemy'))
+            self.units.append(Healer(5, 22, 'enemy'))
+            self.units.append(Srodman(0, 15, 'enemy'))
+            self.units.append(Srodman(11, 15, 'enemy'))
+            self.units.append(Srodman(0, 19, 'enemy'))
+            self.units.append(Srodman(11, 19, 'enemy'))
+            self.units.append(Ballistician(6, 22, 'enemy'))
+            self.units.append(Mage(4, 18, 'enemy'))
+            self.units.append(Mage(8, 18, 'enemy'))
+        elif self.current_level == 14:
+            # Part 3
+            self.units.append(Mage(3, 22, 'enemy'))
+            self.units.append(Mage(3, 23, 'enemy'))
+            self.units.append(Horse(4, 22, 'enemy'))  
+            self.units.append(Horse(4, 23, 'enemy'))
+            self.units.append(Srodman(5, 22, 'enemy'))
+            self.units.append(Srodman(5, 23, 'enemy'))
+            self.units.append(Knight(6, 22, 'enemy'))
+            self.units.append(Knight(6, 23, 'enemy'))
+            self.units.append(Soldier(7, 22, 'enemy'))
+            self.units.append(Soldier(7, 23, 'enemy'))
+            self.units.append(Darkmage(8, 22, 'enemy'))
+            self.units.append(Darkmage(8, 23, 'enemy'))
+            self.units.append(Archer(9, 22, 'enemy'))
+            self.units.append(Archer(9, 23, 'enemy'))
+        elif self.current_level == 15:
+            # Part 3
+            self.units.append(Ballistician(3, 23, 'enemy'))
+            self.units.append(Ballistician(8, 23, 'enemy'))
+            self.units.append(Horsearcher(4, 20, 'enemy'))  
+            self.units.append(Horsearcher(5, 20, 'enemy'))
+            self.units.append(Horsearcher(6, 20, 'enemy'))
+            self.units.append(Archer(1, 20, 'enemy'))
+            self.units.append(Archer(2, 20, 'enemy'))
+            self.units.append(Archer(3, 20, 'enemy'))
+            self.units.append(Archer(7, 20, 'enemy'))
+            self.units.append(Archer(8, 20, 'enemy'))
+            self.units.append(Archer(9, 20, 'enemy'))
+            self.units.append(Archer(10, 20, 'enemy'))
+        elif self.current_level == 16:
+            # Part 3
+            self.units.append(Ballistician(5, 21, 'enemy'))
+            self.units.append(Ballistician(4, 22, 'enemy'))
+            self.units.append(Ballistician(6, 22, 'enemy'))  
+            self.units.append(Ballistician(3, 23, 'enemy'))
+            self.units.append(Ballistician(5, 23, 'enemy'))
+            self.units.append(Ballistician(7, 23, 'enemy'))
+        elif self.current_level == 17:
+            # Part 3
+            self.units.append(Boss3(5, 20, 'enemy'))
+            self.units.append(Soldier(5, 19, 'enemy'))
+            self.units.append(Soldier(4, 19, 'enemy'))
+            self.units.append(Soldier(6, 19, 'enemy'))
+            self.units.append(Soldier(4, 20, 'enemy'))
+            self.units.append(Soldier(6, 20, 'enemy'))
+            self.units.append(Soldier(4, 21, 'enemy'))
+            self.units.append(Soldier(5, 21, 'enemy'))
+            self.units.append(Soldier(6, 21, 'enemy'))
+            self.units.append(Knight(5, 19, 'enemy'))
+            self.units.append(Knight(5, 22, 'enemy'))
+            
 
-
+        # Set enemy levels based on current part (skip bosses)
+        for unit in self.units:
+            if unit.team == 'enemy' and unit.__class__.__name__ not in ['Boss1', 'Boss2', 'Boss3']:
+                if self.current_level <= 5:  # Part 1
+                    unit.set_level(1)
+                elif self.current_level <= 11:  # Part 2
+                    unit.set_level(2)
+                else:  # Part 3
+                    unit.set_level(3)
+        
+        # Apply specific level progression for player units in Part 1, Part 2 and Part 3
+        if self.current_level <= 5:  # Part 1 levels
+            self.apply_part1_stat_overrides()  # Apply Part 1 stat overrides
+        elif 6 <= self.current_level <= 11:  # Part 2 levels
+            self.setup_part2_levels()
+            self.apply_part2_stat_overrides()  # Apply Part 2 stat overrides AFTER level calculation
+        elif self.current_level == 12:  # Part 3 start
+            self.setup_part3_levels()
+            self.apply_part3_stat_overrides()  # Apply Part 3 stat overrides AFTER level calculation
 
 
             
         
         # Reset all units' actions for player phase
         self.reset_all_unit_actions()
+
+    def apply_part1_stat_overrides(self):
+        """Apply Part 1 stat overrides to player units"""
+        # Only apply these overrides for Part 1
+        for unit in self.units:
+            if unit.team == 'player':
+                # Apply Part 1 stat overrides - ONLY override attack for specific units
+                if unit.__class__.__name__ == 'Mage':
+                    # Level 1: Mage should deal 4 damage
+                    unit.atk = 4
+                elif unit.__class__.__name__ == 'Archer':
+                    # Level 1: Archer should deal 2 damage
+                    unit.atk = 2
+                # Mark unit as having enhanced stats
+                unit._enhanced_stats = True
+
+    def apply_part3_stat_overrides(self):
+        """Apply Part 3 stat overrides to player units"""
+        # Only apply these overrides for Part 3
+        for unit in self.units:
+            if unit.team == 'player':
+                # Apply level-based stats for Part 3 units - ONLY override attack
+                if unit.__class__.__name__ == 'Tristan':
+                    # Level 5 enhanced attack
+                    unit.atk = 7
+                elif unit.__class__.__name__ == 'Archer':
+                    # Level 5 enhanced attack (reduced by 1)
+                    unit.atk = 6  # Reduced from 7
+                elif unit.__class__.__name__ == 'Mage':
+                    # Level 5 enhanced attack (reduced by 1)
+                    unit.atk = 8  # Reduced from 9
+                elif unit.__class__.__name__ == 'Horse':
+                    # Level 5 enhanced attack (reduced by 1)
+                    unit.atk = 5  # Reduced from 6
+                elif unit.__class__.__name__ == 'Srodman':
+                    # Level 4 enhanced attack
+                    unit.atk = 6
+                elif unit.__class__.__name__ == 'Knight':
+                    # Level 3 enhanced attack
+                    unit.atk = 7
+                elif unit.__class__.__name__ == 'Horsearcher':
+                    # Level 3 enhanced attack
+                    unit.atk = 3
+                elif unit.__class__.__name__ == 'Ballistician':
+                    # Level 2 enhanced attack
+                    unit.atk = 2
+                elif unit.__class__.__name__ == 'Healer':
+                    # Level 1: Base 0 attack (healer)
+                    unit.atk = 0
+                    
+                # Mark unit as having enhanced stats
+                unit._enhanced_stats = True
+
+    def apply_part2_stat_overrides(self):
+        """Apply Part 2 stat overrides to player units"""
+        # Only apply these overrides for Part 2
+        for unit in self.units:
+            if unit.team == 'player':
+                # Apply level-based stats for Part 2 units - ONLY override attack
+                if unit.__class__.__name__ == 'Tristan':
+                    # Level 4 enhanced attack
+                    unit.atk = 6
+                elif unit.__class__.__name__ == 'Archer':
+                    # Level 3 enhanced attack
+                    unit.atk = 4
+                elif unit.__class__.__name__ == 'Mage':
+                    # Level 3 enhanced attack
+                    unit.atk = 6
+                elif unit.__class__.__name__ == 'Horse':
+                    # Level 3 enhanced attack
+                    unit.atk = 3
+                # Mark unit as having enhanced stats
+                unit._enhanced_stats = True
+
+    def setup_part2_levels(self):
+        """Set specific levels for Part 2 starting units"""
+        part2_levels = {
+            'Tristan': 4,
+            'Archer': 3,
+            'Mage': 3,
+            'Horse': 3
+        }
+        
+        for unit in self.units:
+            if unit.team == 'player' and unit.__class__.__name__ in part2_levels:
+                target_level = part2_levels[unit.__class__.__name__]
+                # Set unit to target level
+                unit.level = target_level
+                unit.exp = 0  # Start at 0 exp for new level
+                unit.exp_to_next_level = target_level * 10  # Standard exp calculation
+                
+                # Use appropriate base stats for calculations
+                if unit.__class__.__name__ == 'Tristan':
+                    # Special case: Tristan should have exactly 14 HP at level 4
+                    unit.max_hp = 14
+                    unit.hp = 14
+                    unit.move = 4 + ((target_level - 1) // 3)  # Original base movement + level bonus
+                    unit.moves_remaining = unit.move
+                    unit.base_hp = unit.max_hp
+                    unit.base_move = unit.move
+                    continue  # Skip the normal calculation for Part 2 Tristan
+                elif unit.__class__.__name__ == 'Archer':
+                    # Special case: Archer should have exactly 10 HP at level 3
+                    unit.max_hp = 10
+                    unit.hp = 10
+                    unit.move = 3 + ((target_level - 1) // 3)  # Original base movement + level bonus
+                    unit.moves_remaining = unit.move
+                    unit.base_hp = unit.max_hp
+                    unit.base_move = unit.move
+                    continue  # Skip the normal calculation for Part 2 Archer
+                elif unit.__class__.__name__ == 'Mage':
+                    # Special case: Mage should have exactly 9 HP at level 3
+                    unit.max_hp = 9
+                    unit.hp = 9
+                    unit.move = 2 + ((target_level - 1) // 3)  # Original base movement + level bonus
+                    unit.moves_remaining = unit.move
+                    unit.base_hp = unit.max_hp
+                    unit.base_move = unit.move
+                    continue  # Skip the normal calculation for Part 2 Mage
+                elif unit.__class__.__name__ == 'Horse':
+                    # Special case: Horse should have exactly 11 HP at level 3
+                    unit.max_hp = 11
+                    unit.hp = 11
+                    unit.move = 6 + ((target_level - 1) // 3)  # Original base movement + level bonus
+                    unit.moves_remaining = unit.move
+                    unit.base_hp = unit.max_hp
+                    unit.base_move = unit.move
+                    continue  # Skip the normal calculation for Part 2 Horse
+                else:
+                    base_hp = unit.base_hp
+                    base_move = unit.base_move
+                
+                # Calculate level-based stats using appropriate base values
+                hp_bonus = (target_level - 1) * int(base_hp * 0.1)
+                move_bonus = ((target_level - 1) // 3)  # +1 move every 3 levels
+                
+                # Apply calculated stats
+                unit.max_hp = base_hp + hp_bonus
+                unit.hp = unit.max_hp  # Full health
+                unit.move = base_move + move_bonus
+                unit.moves_remaining = unit.move
+                
+                # Update base stats to reflect the new level (for future level-ups)
+                unit.base_hp = unit.max_hp
+                unit.base_move = unit.move
+
+    def setup_part3_levels(self):
+        """Set specific levels for Part 3 starting units"""
+        part3_levels = {
+            'Tristan': 5,
+            'Archer': 5,
+            'Mage': 5,
+            'Horse': 5,
+            'Srodman': 4,
+            'Knight': 3,
+            'Healer': 1,
+            'Horsearcher': 3,
+            'Ballistician': 2
+        }
+        
+        for unit in self.units:
+            if unit.team == 'player' and unit.__class__.__name__ in part3_levels:
+                target_level = part3_levels[unit.__class__.__name__]
+                # Set unit to target level
+                unit.level = target_level
+                unit.exp = 0  # Start at 0 exp for new level
+                unit.exp_to_next_level = target_level * 10  # Standard exp calculation
+                
+                # Use appropriate base stats for calculations
+                if unit.__class__.__name__ == 'Tristan':
+                    base_hp = 10  # Original base HP
+                    base_move = 4  # Original base movement
+                    # Special case: Tristan should have exactly 15 HP at level 5
+                    if target_level == 5:
+                        unit.max_hp = 15
+                        unit.hp = 15
+                        unit.move = base_move + ((target_level - 1) // 3)
+                        unit.moves_remaining = unit.move
+                        unit.base_hp = unit.max_hp
+                        unit.base_move = unit.move
+                        continue  # Skip the normal calculation for Part 3 Tristan
+                elif unit.__class__.__name__ == 'Archer':
+                    # Special case: Archer should have exactly 12 HP at level 5
+                    unit.max_hp = 12
+                    unit.hp = 12
+                    unit.move = 3 + ((target_level - 1) // 3)  # Original base movement + level bonus
+                    unit.moves_remaining = unit.move
+                    unit.base_hp = unit.max_hp
+                    unit.base_move = unit.move
+                    continue  # Skip the normal calculation for Part 3 Archer
+                elif unit.__class__.__name__ == 'Mage':
+                    # Special case: Mage should have exactly 11 HP at level 5
+                    unit.max_hp = 11
+                    unit.hp = 11
+                    unit.move = 2 + ((target_level - 1) // 3)  # Original base movement + level bonus
+                    unit.moves_remaining = unit.move
+                    unit.base_hp = unit.max_hp
+                    unit.base_move = unit.move
+                    continue  # Skip the normal calculation for Part 3 Mage
+                elif unit.__class__.__name__ == 'Horse':
+                    # Special case: Horse should have exactly 13 HP at level 5
+                    unit.max_hp = 13
+                    unit.hp = 13
+                    unit.move = 6 + ((target_level - 1) // 3)  # Original base movement + level bonus
+                    unit.moves_remaining = unit.move
+                    unit.base_hp = unit.max_hp
+                    unit.base_move = unit.move
+                    continue  # Skip the normal calculation for Part 3 Horse
+                elif unit.__class__.__name__ == 'Srodman':
+                    base_hp = 11  # Original base HP
+                    base_move = 4  # Original base movement
+                elif unit.__class__.__name__ == 'Knight':
+                    base_hp = 12  # Original base HP
+                    base_move = 2  # Original base movement
+                elif unit.__class__.__name__ == 'Healer':
+                    base_hp = 6   # Original base HP
+                    base_move = 3  # Original base movement
+                elif unit.__class__.__name__ == 'Horsearcher':
+                    base_hp = 7   # Original base HP
+                    base_move = 6  # Original base movement
+                elif unit.__class__.__name__ == 'Ballistician':
+                    base_hp = 6   # Original base HP
+                    base_move = 1  # Original base movement
+                else:
+                    base_hp = unit.base_hp
+                    base_move = unit.base_move
+                
+                # Calculate level-based stats using appropriate base values
+                hp_bonus = (target_level - 1) * int(base_hp * 0.1)
+                move_bonus = ((target_level - 1) // 3)  # +1 move every 3 levels
+                
+                # Apply calculated stats
+                unit.max_hp = base_hp + hp_bonus
+                unit.hp = unit.max_hp  # Full health
+                unit.move = base_move + move_bonus
+                unit.moves_remaining = unit.move
+                
+                # Update base stats to reflect the new level (for future level-ups)
+                unit.base_hp = unit.max_hp
+                unit.base_move = unit.move
 
     def restore_unit_progression(self, unit, saved_progress):
         """Restore a unit's leveled stats and progression"""
@@ -146,13 +544,16 @@ class GameState:
         unit.base_atk = saved_progress['base_atk']
         unit.base_move = saved_progress['base_move']
         
-        # Apply the leveled stats
-        unit.max_hp = unit.base_hp
+        # Restore current stats with full HP for new battle
+        unit.max_hp = saved_progress['current_max_hp']  # Use saved max HP
         unit.hp = unit.max_hp  # Full heal between levels
-        unit.atk = unit.base_atk
-        unit.move = unit.base_move
+        unit.atk = saved_progress['current_atk']  # Keep current attack
+        unit.move = saved_progress['current_move']  # Keep current movement
         unit.moves_remaining = unit.move
-
+        
+        # Preserve enhanced stats flag
+        if '_enhanced_stats' in saved_progress:
+            unit._enhanced_stats = saved_progress['_enhanced_stats']
     def reset_all_unit_actions(self):
         """Reset actions for all units of the current phase"""
         for unit in self.units:
@@ -164,7 +565,7 @@ class GameState:
         existing_player_units = {}
         if hasattr(self, 'units'):
             for unit in self.units:
-                if unit.team == 'player' and unit.hp > 0:
+                if unit.team == 'player':  # Store ALL player units, not just alive ones
                     # Store unit class and progress
                     existing_player_units[unit.__class__.__name__] = {
                         'level': getattr(unit, 'level', 1),
@@ -173,7 +574,12 @@ class GameState:
                         'kills': getattr(unit, 'kills', 0),
                         'base_hp': getattr(unit, 'base_hp', unit.hp),
                         'base_atk': getattr(unit, 'base_atk', unit.atk),
-                        'base_move': getattr(unit, 'base_move', unit.move)
+                        'base_move': getattr(unit, 'base_move', unit.move),
+                        'current_hp': getattr(unit, 'hp', unit.max_hp),  # Store current HP
+                        'current_max_hp': getattr(unit, 'max_hp', unit.hp),  # Store max HP
+                        'current_atk': getattr(unit, 'atk', unit.base_atk),  # Store current attack
+                        'current_move': getattr(unit, 'move', unit.base_move),  # Store current movement
+                        '_enhanced_stats': getattr(unit, '_enhanced_stats', False)
                     }
         
         # Advance to next level
@@ -288,8 +694,13 @@ class GameState:
         if u and u.team == 'player':
             self.selected = u
             self.highlight_tiles = list(self.walkable(u))
-            # populate attack targets (units in range)
-            self.attack_targets = [t for t in self.units if t.team != u.team and t.hp > 0 and (abs(t.x - u.x) + abs(t.y - u.y)) <= u.atk_range]
+            # populate attack targets (units in range) - only if unit has attacks remaining
+            if u.__class__.__name__ == 'Healer':
+                # Healers see wounded allies as targets for healing
+                self.attack_targets = [t for t in self.units if t.team == u.team and t.hp > 0 and t.hp < t.max_hp and u.attacks_remaining > 0 and (abs(t.x - u.x) + abs(t.y - u.y)) <= u.atk_range]
+            else:
+                # Normal units see enemies as targets
+                self.attack_targets = [t for t in self.units if t.team != u.team and t.hp > 0 and u.attacks_remaining > 0 and (abs(t.x - u.x) + abs(t.y - u.y)) <= u.atk_range]
             return
 
         # move if tile is highlighted and selected is a player unit
@@ -304,18 +715,40 @@ class GameState:
                 self.attack_targets = []
                 return
 
-        # attack if clicking on an enemy within attack range
-        if self.selected and self.selected.team == 'player' and u and u.team != self.selected.team:
+        # attack if clicking on a valid target within range
+        if self.selected and self.selected.team == 'player' and u:
             dist = abs(u.x - self.selected.x) + abs(u.y - self.selected.y)
             if dist <= self.selected.atk_range:
                 if self.selected.spend_attack():
-                    # Store enemy's exp reward before defeating
-                    exp_reward = u.get_exp_reward()
-                    u.take_damage(self.selected.atk)
-                    # Award experience if enemy was defeated
-                    if not u.is_alive():
-                        self.selected.gain_exp(exp_reward)
-                        self.selected.kills += 1
+                    # Check if attacker is a Healer
+                    if self.selected.__class__.__name__ == 'Healer':
+                        # Healers can only heal allies, never attack enemies
+                        if u.team == 'player':
+                            # Heal ally instead of attacking
+                            from classes.Healer import Healer
+                            healer_unit = self.selected  # Type cast to Healer
+                            if healer_unit.heal(u):
+                                # Show healing effect
+                                print(f"{healer_unit.__class__.__name__} healed {u.__class__.__name__} for 1 HP!")
+                        else:
+                            # Healer trying to attack enemy - cancel attack and refund attack
+                            self.selected.attacks_remaining += 1
+                            print("Healers cannot attack enemies!")
+                        # Clear selection/targets after action
+                        self.selected = None
+                        self.highlight_tiles = []
+                        self.attack_targets = []
+                        return
+                    else:
+                        # Normal attack for non-healer units - only attack enemies
+                        if u.team != self.selected.team:
+                            # Store enemy's exp reward before defeating
+                            exp_reward = u.get_exp_reward()
+                            u.take_damage(self.selected.atk)
+                            # Award experience if enemy was defeated
+                            if not u.is_alive():
+                                self.selected.gain_exp(exp_reward)
+                                self.selected.kills += 1
                     # remove dead units, rebuild queues
                     self.cleanup_dead()
                     # clear selection/targets after attack
@@ -325,12 +758,16 @@ class GameState:
                     return
 
     def update(self, dt):
-        # Handle victory timer for level progression
-        if self.game_over and self.victory and hasattr(self, 'victory_timer'):
+        # Handle victory timer for level progression (skip boss levels)
+        if self.game_over and self.victory and hasattr(self, 'victory_timer') and self.current_level not in [5, 11]:
             self.victory_timer -= dt
             if self.victory_timer <= 0:
                 self.next_level()
                 return
+        
+        # Handle defeat - stop game updates when Tristan is defeated
+        if self.game_over and not self.victory:
+            return  # Don't update anything when defeated
         
         # Update phase announcement timers
         if hasattr(self, 'phase_announcement_timer') and self.phase_announcement_timer > 0:
@@ -436,12 +873,16 @@ class GameState:
         if hasattr(current_enemy, 'enemy_move_cooldown'):
             current_enemy.enemy_move_cooldown -= dt
             if current_enemy.enemy_move_cooldown <= 0:
-                # Check if can attack first
-                if hasattr(current_enemy, 'ai_target') and current_enemy.ai_target and current_enemy.ai_target.hp > 0:
-                    if self.can_attack_target(current_enemy, current_enemy.ai_target):
+                # Special handling for healer units
+                if current_enemy.__class__.__name__ == 'Healer':
+                    # Find wounded ally to heal
+                    heal_target = self.find_wounded_ally(current_enemy)
+                    if heal_target and self.can_heal_target(current_enemy, heal_target):
                         if hasattr(current_enemy, 'spend_attack') and current_enemy.spend_attack():
-                            current_enemy.ai_target.take_damage(current_enemy.atk)
-                            self.cleanup_dead()
+                            from classes.Healer import Healer
+                            healer_unit = current_enemy
+                            if healer_unit.heal(heal_target):
+                                print(f"Enemy Healer healed {heal_target.__class__.__name__} for 1 HP!")
                             if hasattr(current_enemy, 'has_acted_this_phase'):
                                 current_enemy.has_acted_this_phase = True
                             # Move to next enemy immediately
@@ -452,6 +893,91 @@ class GameState:
                             else:
                                 self.active_enemy = None
                             return
+                    elif heal_target:
+                        # Move towards wounded ally
+                        dx = 0 if current_enemy.x == heal_target.x else (1 if heal_target.x > current_enemy.x else -1)
+                        dy = 0 if current_enemy.y == heal_target.y else (1 if heal_target.y > current_enemy.y else -1)
+                        moved = False
+                        
+                        # Try horizontal movement first
+                        if dx != 0:
+                            nx, ny = current_enemy.x + dx, current_enemy.y
+                            occupying_unit = self.unit_at(nx, ny)
+                            if (occupying_unit is None or occupying_unit == current_enemy) and self.in_bounds(nx, ny):
+                                current_enemy.x, current_enemy.y = nx, ny
+                                current_enemy.moves_remaining -= 1
+                                moved = True
+                        
+                        # Try vertical movement if horizontal didn't work
+                        if not moved and dy != 0:
+                            nx, ny = current_enemy.x, current_enemy.y + dy
+                            occupying_unit = self.unit_at(nx, ny)
+                            if (occupying_unit is None or occupying_unit == current_enemy) and self.in_bounds(nx, ny):
+                                current_enemy.x, current_enemy.y = nx, ny
+                                current_enemy.moves_remaining -= 1
+                                moved = True
+                        
+                        if moved:
+                            # Check if can heal after moving
+                            if self.can_heal_target(current_enemy, heal_target):
+                                if hasattr(current_enemy, 'spend_attack') and current_enemy.spend_attack():
+                                    from classes.Healer import Healer
+                                    healer_unit = current_enemy
+                                    if healer_unit.heal(heal_target):
+                                        print(f"Enemy Healer healed {heal_target.__class__.__name__} for 1 HP!")
+                                    if hasattr(current_enemy, 'has_acted_this_phase'):
+                                        current_enemy.has_acted_this_phase = True
+                                    # Move to next enemy immediately
+                                    self.current_enemy_index += 1
+                                    if self.current_enemy_index < len(enemies):
+                                        self.active_enemy = enemies[self.current_enemy_index]
+                                        self.active_enemy.enemy_move_cooldown = 0.5
+                                    else:
+                                        self.active_enemy = None
+                                    return
+                            
+                            # Reset cooldown for next action
+                            current_enemy.enemy_move_cooldown = 0.3
+                        else:
+                            # Can't move, end turn
+                            if hasattr(current_enemy, 'has_acted_this_phase'):
+                                current_enemy.has_acted_this_phase = True
+                            self.current_enemy_index += 1
+                            if self.current_enemy_index < len(enemies):
+                                self.active_enemy = enemies[self.current_enemy_index]
+                                self.active_enemy.enemy_move_cooldown = 0.5
+                            else:
+                                self.active_enemy = None
+                            return
+                    else:
+                        # No wounded allies, end turn
+                        if hasattr(current_enemy, 'has_acted_this_phase'):
+                            current_enemy.has_acted_this_phase = True
+                        self.current_enemy_index += 1
+                        if self.current_enemy_index < len(enemies):
+                            self.active_enemy = enemies[self.current_enemy_index]
+                            self.active_enemy.enemy_move_cooldown = 0.5
+                        else:
+                            self.active_enemy = None
+                        return
+                else:
+                    # Normal enemy AI for non-healer units
+                    # Check if can attack first
+                    if hasattr(current_enemy, 'ai_target') and current_enemy.ai_target and current_enemy.ai_target.hp > 0:
+                        if self.can_attack_target(current_enemy, current_enemy.ai_target):
+                            if hasattr(current_enemy, 'spend_attack') and current_enemy.spend_attack():
+                                current_enemy.ai_target.take_damage(current_enemy.atk)
+                                self.cleanup_dead()
+                                if hasattr(current_enemy, 'has_acted_this_phase'):
+                                    current_enemy.has_acted_this_phase = True
+                                # Move to next enemy immediately
+                                self.current_enemy_index += 1
+                                if self.current_enemy_index < len(enemies):
+                                    self.active_enemy = enemies[self.current_enemy_index]
+                                    self.active_enemy.enemy_move_cooldown = 0.5
+                                else:
+                                    self.active_enemy = None
+                                return
                 
                 # Try to move towards target
                 if hasattr(current_enemy, 'moves_remaining') and current_enemy.moves_remaining > 0:
@@ -579,6 +1105,11 @@ class GameState:
         """Check if attacker can reach target with their attack range"""
         if not target or target.hp <= 0:
             return False
+        
+        # Healers cannot attack enemies
+        if attacker.__class__.__name__ == 'Healer':
+            return False
+            
         dist = abs(target.x - attacker.x) + abs(target.y - attacker.y)
         return dist <= attacker.atk_range
 
@@ -587,6 +1118,24 @@ class GameState:
         if not players:
             return None
         return min(players, key=lambda p: abs(p.x - unit.x) + abs(p.y - unit.y))
+
+    def find_wounded_ally(self, healer: Unit):
+        """Find the nearest wounded ally that needs healing"""
+        allies = [u for u in self.units if u.team == healer.team and u.hp > 0 and u.hp < u.max_hp]
+        # Don't include the healer themselves if they're at full health
+        allies = [u for u in allies if u != healer or u.hp < u.max_hp]
+        if not allies:
+            return None
+        return min(allies, key=lambda a: abs(a.x - healer.x) + abs(a.y - healer.y))
+
+    def can_heal_target(self, healer, target):
+        """Check if healer can reach target for healing"""
+        if not target or target.hp <= 0 or target.hp >= target.max_hp:
+            return False
+        if target.team != healer.team:
+            return False
+        dist = abs(target.x - healer.x) + abs(target.y - healer.y)
+        return dist <= healer.atk_range
 
 
     def cleanup_dead(self):

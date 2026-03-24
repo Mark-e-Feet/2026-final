@@ -6,7 +6,7 @@ from dataclasses import dataclass
 class Mage(Unit):
     move: int = 2
     hp: int = 7
-    atk: int = 4
+    atk: int = 3
     atk_range: int = 3
 
     def __post_init__(self):

@@ -13,7 +13,7 @@ class Game:
         self.camera_y = 0
         self.viewport_width = 12  # Visible tiles horizontally
         self.viewport_height = 8  # Visible tiles vertically
-        self.scroll_speed = 4  # Pixels per frame when holding key
+        self.scroll_speed = 8  # Pixels per frame when holding key (increased for better visibility)
         self.enable_scrolling = False  # Enable after boss victory
         
         # Track which keys are currently pressed
@@ -30,6 +30,28 @@ class Game:
         self.state = GameState(width, height, starting_level)
         self.font = pygame.font.SysFont(None, 24)
         self.running = True
+        
+        # Load terrain images
+        try:
+            self.grass_image = pygame.image.load("assets/grass.png")
+            self.dirt_image = pygame.image.load("assets/dirtpath.png")
+            self.castle_image = pygame.image.load("assets/castle.png")
+            self.road_image = pygame.image.load("assets/roed.png")
+            self.destroyed_house_image = pygame.image.load("assets/destroyed house.png")
+            # Scale images to tile size
+            self.grass_image = pygame.transform.scale(self.grass_image, (tile, tile))
+            self.dirt_image = pygame.transform.scale(self.dirt_image, (tile, tile))
+            self.castle_image = pygame.transform.scale(self.castle_image, (tile, tile))
+            self.road_image = pygame.transform.scale(self.road_image, (tile, tile))
+            self.destroyed_house_image = pygame.transform.scale(self.destroyed_house_image, (tile, tile))
+        except pygame.error as e:
+            print(f"Could not load terrain images: {e}")
+            # Fallback to solid colors if images fail to load
+            self.grass_image = None
+            self.dirt_image = None
+            self.castle_image = None
+            self.road_image = None
+            self.destroyed_house_image = None
         
         # Update state dimensions if different from default
         self.state.width = width
@@ -48,6 +70,10 @@ class Game:
         self.boss2_victory_story_duration = 8.0  # Show for 8 seconds
         self.boss2_story_scroll_offset = 0.0
         self.boss2_story_scroll_speed = 0.1
+        
+        # Track if Level transitions have been done
+        self.level_6_transition_done = False
+        self.level_12_transition_done = False
 
     def get_level_name(self):
         """Get display name for current level"""
@@ -89,10 +115,12 @@ class Game:
                 if self.boss2_victory_story_active:
                     self.boss2_victory_story_active = False
                     self.state.next_level()
+                # Return to main menu when defeated
+                if self.state.game_over and not self.state.victory:
+                    self.running = False
                 # Handle scrolling when enabled - track key press
-                elif self.enable_scrolling:
-                    if ev.key in [pygame.K_LEFT, pygame.K_a, pygame.K_RIGHT, pygame.K_d, pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s]:
-                        self.keys_pressed.add(ev.key)
+                if self.enable_scrolling and ev.key in [pygame.K_LEFT, pygame.K_a, pygame.K_RIGHT, pygame.K_d, pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s]:
+                    self.keys_pressed.add(ev.key)
             elif ev.type == pygame.KEYUP:
                 # Remove key from pressed set when released
                 if ev.key in self.keys_pressed:
@@ -119,8 +147,35 @@ class Game:
             if pygame.K_DOWN in self.keys_pressed or pygame.K_s in self.keys_pressed:
                 self.camera_y = min(max_y, self.camera_y + self.scroll_speed)
         
-        # Track if Level 6 transition has been done
-        self.level_6_transition_done = False
+        # Camera tracking for active enemy during enemy phase
+        if self.enable_scrolling and hasattr(self.state, 'active_enemy') and self.state.active_enemy:
+            # Calculate desired camera position to center on active enemy
+            target_x = self.state.active_enemy.x * self.tile - (self.viewport_width * self.tile) // 2
+            target_y = self.state.active_enemy.y * self.tile - (self.viewport_height * self.tile) // 2
+            
+            # Smooth camera movement towards target
+            camera_speed = 12  # Faster camera for enemy tracking
+            if abs(target_x - self.camera_x) > camera_speed:
+                if target_x > self.camera_x:
+                    self.camera_x += camera_speed
+                else:
+                    self.camera_x -= camera_speed
+            else:
+                self.camera_x = target_x
+                
+            if abs(target_y - self.camera_y) > camera_speed:
+                if target_y > self.camera_y:
+                    self.camera_y += camera_speed
+                else:
+                    self.camera_y -= camera_speed
+            else:
+                self.camera_y = target_y
+            
+            # Clamp camera to valid boundaries
+            max_x = max(0, (self.width - self.viewport_width) * self.tile)
+            max_y = max(0, (self.height - self.viewport_height) * self.tile)
+            self.camera_x = max(0, min(max_x, self.camera_x))
+            self.camera_y = max(0, min(max_y, self.camera_y))
         
         # Check for boss victory and start story
         if self.state.game_over and self.state.victory and self.state.current_level == 5 and not self.boss_victory_story_active:
@@ -133,6 +188,23 @@ class Game:
             self.boss2_victory_story_active = True
             self.boss2_victory_story_timer = self.boss2_victory_story_duration
             self.boss2_story_scroll_offset = 0.0
+        
+        # Check for Level 12 transition to ultra-expanded battlefield (only once)
+        if self.state.current_level == 12 and not self.level_12_transition_done:
+            # Expand to ultra battlefield and enable scrolling
+            self.width = 12
+            self.height = 24
+            self.viewport_width = 12  # Keep viewport same size
+            self.viewport_height = 8  # Keep viewport same size
+            self.enable_scrolling = True  # Enable scrolling for ultra battlefield
+            # Update state dimensions
+            self.state.width = 12
+            self.state.height = 24
+            # Reset camera position
+            self.camera_x = 0
+            self.camera_y = 0
+            # Mark transition as done
+            self.level_12_transition_done = True
         
         # Check for Level 6 transition to expanded battlefield (only once)
         if self.state.current_level == 6 and not self.level_6_transition_done and not self.enable_scrolling:
@@ -153,33 +225,23 @@ class Game:
         
         # Update boss victory story
         if self.boss_victory_story_active:
-            self.boss_victory_story_timer -= dt
             self.boss_story_scroll_offset += self.boss_story_scroll_speed
             
             # Reset scroll when it goes too far
             if self.boss_story_scroll_offset > 600:
                 self.boss_story_scroll_offset = 0.0
                 
-            # End story after duration
-            if self.boss_victory_story_timer <= 0:
-                self.boss_victory_story_active = False
-                # Continue with normal level progression
-                self.state.next_level()
+            # Remove automatic timer ending - story only ends on button press
         
         # Update Boss 2 victory story
         if self.boss2_victory_story_active:
-            self.boss2_victory_story_timer -= dt
             self.boss2_story_scroll_offset += self.boss2_story_scroll_speed
             
             # Reset scroll when it goes too far
             if self.boss2_story_scroll_offset > 600:
                 self.boss2_story_scroll_offset = 0.0
                 
-            # End story after duration
-            if self.boss2_victory_story_timer <= 0:
-                self.boss2_victory_story_active = False
-                # Continue with normal level progression
-                self.state.next_level()
+            # Remove automatic timer ending - story only ends on button press
 
     def draw(self):
         s = self.screen
@@ -199,23 +261,78 @@ class Game:
         end_x = min(self.width, start_x + self.viewport_width + 1)
         end_y = min(self.height, start_y + self.viewport_height + 1)
         
-        # draw grid (only visible tiles)
+        # draw grid with terrain (only visible tiles)
         for x in range(start_x, end_x):
             for y in range(start_y, end_y):
                 screen_x = x * self.tile - self.camera_x
                 screen_y = y * self.tile - self.camera_y
                 rect = pygame.Rect(screen_x, screen_y, self.tile, self.tile)
-                color = (70, 70, 70) if (x + y) % 2 == 0 else (60, 60, 60)
-                pygame.draw.rect(s, color, rect)
-                pygame.draw.rect(s, (40, 40, 40), rect, 1)
+                
+                # Check if we have terrain data for this position
+                if (hasattr(self.state, 'terrain') and self.state.terrain and 
+                    y < len(self.state.terrain) and x < len(self.state.terrain[y])):
+                    terrain_type = self.state.terrain[y][x]
+                    
+                    # Use terrain images if available, otherwise fallback to colors
+                    if terrain_type == 'dirt':
+                        if self.dirt_image:
+                            s.blit(self.dirt_image, (screen_x, screen_y))
+                        else:
+                            # Fallback to solid brown
+                            color = (101, 67, 33) if (x + y) % 2 == 0 else (92, 51, 23)
+                            pygame.draw.rect(s, color, rect)
+                    elif terrain_type == 'castle':
+                        if self.castle_image:
+                            s.blit(self.castle_image, (screen_x, screen_y))
+                        else:
+                            # Fallback to solid gray
+                            color = (128, 128, 128) if (x + y) % 2 == 0 else (105, 105, 105)
+                            pygame.draw.rect(s, color, rect)
+                    elif terrain_type == 'road':
+                        # Use road image
+                        if self.road_image:
+                            s.blit(self.road_image, (screen_x, screen_y))
+                        else:
+                            # Fallback to darker brown for road
+                            color = (80, 50, 20) if (x + y) % 2 == 0 else (70, 40, 15)
+                            pygame.draw.rect(s, color, rect)
+                    elif terrain_type == 'destroyed_house':
+                        # Use destroyed house image
+                        if self.destroyed_house_image:
+                            s.blit(self.destroyed_house_image, (screen_x, screen_y))
+                        else:
+                            # Fallback to dark red/brown for destroyed house
+                            color = (139, 69, 19) if (x + y) % 2 == 0 else (101, 50, 14)
+                            pygame.draw.rect(s, color, rect)
+                    else:  # grass
+                        if self.grass_image:
+                            s.blit(self.grass_image, (screen_x, screen_y))
+                        else:
+                            # Fallback to solid gray-green
+                            color = (70, 70, 70) if (x + y) % 2 == 0 else (60, 60, 60)
+                            pygame.draw.rect(s, color, rect)
+                else:
+                    # Default terrain if no terrain data
+                    if self.grass_image:
+                        s.blit(self.grass_image, (screen_x, screen_y))
+                    else:
+                        color = (70, 70, 70) if (x + y) % 2 == 0 else (60, 60, 60)
+                        pygame.draw.rect(s, color, rect)
+                
+                # Draw grid lines around each tile for better visibility
+                pygame.draw.rect(s, (30, 30, 30), rect, 1)  # Dark gray grid lines
         # highlights (only visible ones)
         for (x, y) in self.state.highlight_tiles:
             if start_x <= x < end_x and start_y <= y < end_y:
                 screen_x = x * self.tile - self.camera_x
                 screen_y = y * self.tile - self.camera_y
                 rect = pygame.Rect(screen_x, screen_y, self.tile, self.tile)
-                pygame.draw.rect(s, (50, 150, 50), rect, 0)
-                pygame.draw.rect(s, (50, 200, 50), rect, 3)
+                # Create a semi-transparent green highlight overlay instead of solid color
+                highlight_surface = pygame.Surface((self.tile, self.tile), pygame.SRCALPHA)
+                highlight_surface.fill((50, 200, 50, 100))  # Semi-transparent green
+                s.blit(highlight_surface, (screen_x, screen_y))
+                # Draw a brighter green border
+                pygame.draw.rect(s, (100, 255, 100), rect, 3)
         # attack targets (red tint)
         if getattr(self.state, 'attack_targets', None):
             for t in self.state.attack_targets:
@@ -244,10 +361,16 @@ class Game:
                 hp_text = self.font.render(str(u.hp), True, (255, 255, 255))
                 s.blit(hp_text, (screen_x + 4, screen_y + 4))
                 
-                # Draw level indicator for player units (keep the level number)
+                # Draw level indicator for player units (gold color)
                 if hasattr(u, 'level') and u.team == 'player' and u.level > 1:
                     level_font = pygame.font.SysFont(None, 16)
                     level_text = level_font.render(str(u.level), True, (255, 215, 0))
+                    s.blit(level_text, (screen_x + self.tile - 12, screen_y + 4))
+                
+                # Draw level indicator for enemy units (red color) - only show level 2+
+                if hasattr(u, 'level') and u.team == 'enemy' and u.level > 1:
+                    level_font = pygame.font.SysFont(None, 16)
+                    level_text = level_font.render(str(u.level), True, (255, 100, 100))
                     s.blit(level_text, (screen_x + self.tile - 12, screen_y + 4))
         # selection cursor (only if visible) - always draw if unit is selected
         if self.state.selected:
@@ -295,7 +418,7 @@ class Game:
             if self.state.victory:
                 status = f"{self.get_level_name()} VICTORY! Advancing to next level..."
             else:
-                status = "DEFEAT! All units lost."
+                status = "TRISTAN DEFEATED! Press any key to return to main menu."
         else:
             status = "No active unit"
         
@@ -438,18 +561,15 @@ class Game:
             story_text = [
                 "VICTORY!",
                 "",
-                "Tristan and his party finally reached the Great Sage of Tyick.",
-                "The sage revealed that Gredson had discovered an ancient power",
-                "that made him nearly unstoppable.",
-                "",
-                "But there was hope - a legendary artifact hidden in the mountains",
-                "of Lackol that could counter Gredson's strength.",
-                "The sage gave Tristan a map and warned that the path would be dangerous,",
-                "filled with Gredson's elite guards.",
-                "",
-                "With new knowledge and determination, Tristan and his companions",
-                "set forth toward Lackol, knowing this could be their final chance",
-                "to save Tharen from darkness.",
+                "Tristan and his party made it to Tyick.",
+                "But on their way to the Great Sage they fought a Mage using a strange dark Magic keeping them away from the Great Sage",
+                "Tristan and his party defeated him and made it to the Great Sage.",
+                "The Great Sage said that the magic that he was using was dark dragon Magic!",
+                "Then he also told them of a stone in each kingdom.",
+                "Each one of the stones has a great amount of power and told them that is why Gredson is attacking the kingdoms.",
+                "The Great Sage sends them to Reevin to find  the stone of  Reevin.",
+                "And Send them off with some new troops. ",
+                "So Tristan and his party head back to his homeland of Reevin.",
                 "",
                 "Press any key to continue..."
             ]
@@ -500,22 +620,35 @@ class Game:
                 for unit in self.state.units:
                     if unit.__class__.__name__ == 'Tristan' and unit.hp <= 0:
                         tristan_defeated = True
+                        # Set game over state when Tristan is defeated
+                        self.state.game_over = True
+                        self.state.victory = False
                         break
                 
-                big_font = pygame.font.SysFont(None, 72)
                 if tristan_defeated:
-                    defeat_text = big_font.render("TRISTAN DEFEATED!", True, (200, 50, 50))
-                    sub_text = sub_font.render("The hero has fallen...", True, (255, 255, 255))
+                    # Draw defeat screen and stop other drawing
+                    big_font = pygame.font.SysFont(None, 96)
+                    sub_font = pygame.font.SysFont(None, 48)
+                    defeat_text = big_font.render("GAME OVER", True, (200, 50, 50))
+                    tristan_text = sub_font.render("Tristan is defeated!", True, (255, 100, 100))
+                    text_rect = defeat_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 - 40))
+                    tristan_rect = tristan_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 + 20))
+                    s.blit(defeat_text, text_rect)
+                    s.blit(tristan_text, tristan_rect)
+                    # Don't draw anything else when defeated
+                    return
                 else:
+                    # Generic defeat for other scenarios
+                    big_font = pygame.font.SysFont(None, 72)
                     defeat_text = big_font.render("DEFEAT!", True, (200, 50, 50))
-                    sub_text = sub_font.render("All units lost!", True, (255, 255, 255))
-                
-                text_rect = defeat_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 - 20))
-                s.blit(defeat_text, text_rect)
-                
-                sub_font = pygame.font.SysFont(None, 36)
-                sub_rect = sub_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 + 30))
-                s.blit(sub_text, sub_rect)
+                    sub_font = pygame.font.SysFont(None, 36)
+                    sub_text = sub_font.render("All units lost...", True, (255, 255, 255))
+                    text_rect = defeat_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 - 20))
+                    sub_rect = sub_text.get_rect(center=(self.viewport_width * self.tile // 2, self.viewport_height * self.tile // 2 + 30))
+                    s.blit(defeat_text, text_rect)
+                    s.blit(sub_text, sub_rect)
+                    # Don't draw anything else when defeated
+                    return
         
         # Always draw status bar last to keep it on top of overlays
         if not self.state.game_over:
@@ -549,9 +682,9 @@ class Game:
                         break
                 
                 if tristan_defeated:
-                    status = "DEFEAT! Tristan defeated!"
+                    status = "DEFEAT! Tristan is defeated!"
                 else:
-                    status = "DEFEAT! All units lost."
+                    status = "DEFEAT! Tristan is defeated!"
         else:
             status = "No active unit"
         
