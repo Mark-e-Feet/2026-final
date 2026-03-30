@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 @dataclass
 class Boss1(Unit):
-    move: int = 1
+    move: int = 2
     hp: int = 18
-    atk: int = 4
+    atk: int = 5
     atk_range: int = 3
 
     def __post_init__(self):

@@ -15,6 +15,6 @@ class Boss3(Unit):
     def get_exp_reward(self):
         """Calculate experience reward for defeating Boss3 - gives bonus XP"""
         base_exp = 5
-        level_bonus = self.level * 3
+        level_bonus = self.level * 4
         boss_bonus = 25  # Extra 25 XP for defeating the boss
         return base_exp + level_bonus + boss_bonus

@@ -29,6 +29,7 @@ class GameState:
         self.current_phase = 'player'  # 'player' or 'enemy'
         self.phase_timer = 0.0
         self.terrain = []  # Store terrain layout
+        self.enable_scrolling = False  # Initialize scrolling flag
         self.setup_level()
 
     def load_terrain(self, level_num):
@@ -72,6 +73,10 @@ class GameState:
         else:
             # Default grass terrain for higher levels
             self.terrain = [['grass' for _ in range(self.width)] for _ in range(self.height)]
+        
+        # Enable scrolling for Parts 2, 3, and 4
+        if self.current_level >= 6:
+            self.enable_scrolling = True
         
         # Player units (preserve progression across levels)
         if self.current_level == 1:
@@ -255,17 +260,100 @@ class GameState:
             self.units.append(Ballistician(7, 23, 'enemy'))
         elif self.current_level == 17:
             # Part 3
-            self.units.append(Boss3(5, 20, 'enemy'))
-            self.units.append(Soldier(5, 19, 'enemy'))
-            self.units.append(Soldier(4, 19, 'enemy'))
-            self.units.append(Soldier(6, 19, 'enemy'))
-            self.units.append(Soldier(4, 20, 'enemy'))
-            self.units.append(Soldier(6, 20, 'enemy'))
-            self.units.append(Soldier(4, 21, 'enemy'))
-            self.units.append(Soldier(5, 21, 'enemy'))
-            self.units.append(Soldier(6, 21, 'enemy'))
-            self.units.append(Knight(5, 19, 'enemy'))
-            self.units.append(Knight(5, 22, 'enemy'))
+            self.units.append(Boss3(5, 19, 'enemy'))  
+            self.units.append(Horse(5, 18, 'enemy'))
+            self.units.append(Horse(4, 19, 'enemy'))
+            self.units.append(Horse(6, 19, 'enemy'))
+            self.units.append(Horse(5, 20, 'enemy'))
+        elif self.current_level == 18:
+            # Part 4
+            self.units.append(Horse(28, 0, 'enemy'))
+            self.units.append(Horse(28, 1, 'enemy'))
+            self.units.append(Horse(28, 2, 'enemy'))
+            self.units.append(Horse(28, 3, 'enemy'))
+            self.units.append(Horse(28, 4, 'enemy'))
+            self.units.append(Horse(28, 5, 'enemy'))
+            self.units.append(Horse(28, 6, 'enemy'))
+            self.units.append(Horse(28, 7, 'enemy'))
+            self.units.append(Horsearcher(29, 0, 'enemy'))
+            self.units.append(Horsearcher(29, 1, 'enemy'))
+            self.units.append(Horsearcher(29, 2, 'enemy'))
+            self.units.append(Horsearcher(29, 3, 'enemy'))
+            self.units.append(Horsearcher(29, 4, 'enemy'))
+            self.units.append(Horsearcher(29, 5, 'enemy'))
+            self.units.append(Horsearcher(29, 6, 'enemy'))
+            self.units.append(Horsearcher(29, 7, 'enemy'))
+        elif self.current_level == 19:
+            # Part 4
+            self.units.append(Knight(25, 3, 'enemy'))
+            self.units.append(Knight(25, 4, 'enemy'))
+            self.units.append(Knight(26, 3, 'enemy'))
+            self.units.append(Knight(26, 4, 'enemy'))
+            self.units.append(Mage(27, 3, 'enemy'))
+            self.units.append(Mage(27, 4, 'enemy'))
+            self.units.append(Darkmage(28, 3, 'enemy'))
+            self.units.append(Darkmage(28, 4, 'enemy'))
+            self.units.append(Soldier(27, 2, 'enemy'))
+            self.units.append(Soldier(28, 1, 'enemy')) 
+            self.units.append(Soldier(29, 0, 'enemy'))
+            self.units.append(Srodman(27, 5, 'enemy'))
+            self.units.append(Srodman(28, 6, 'enemy'))
+            self.units.append(Srodman(29, 7, 'enemy'))
+            self.units.append(Ballistician(28, 2, 'enemy'))
+            self.units.append(Ballistician(28, 5, 'enemy'))
+        elif self.current_level == 20:
+            # Part 4
+            self.units.append(Srodman(14, 0, 'enemy'))
+            self.units.append(Srodman(14, 7, 'enemy'))
+            self.units.append(Soldier(17, 1, 'enemy'))
+            self.units.append(Soldier(17, 6, 'enemy'))
+            self.units.append(Knight(20, 2, 'enemy'))
+            self.units.append(Knight(20, 5, 'enemy'))
+            self.units.append(Srodman(20, 1, 'enemy'))
+            self.units.append(Srodman(20, 6, 'enemy'))
+            self.units.append(Mage(23, 4, 'enemy'))
+            self.units.append(Horse(24, 2, 'enemy'))
+            self.units.append(Horse(24, 5, 'enemy'))
+        elif self.current_level == 21:
+            # Part 4
+            self.units.append(Horse(12, 0, 'enemy'))
+            self.units.append(Horse(12, 2, 'enemy'))
+            self.units.append(Horse(12, 4, 'enemy'))
+            self.units.append(Horse(12, 6, 'enemy'))
+            self.units.append(Knight(16, 0, 'enemy'))
+            self.units.append(Knight(26, 2, 'enemy'))
+            self.units.append(Knight(27, 0, 'enemy'))
+            self.units.append(Knight(27, 1, 'enemy'))
+            self.units.append(Mage(27, 2, 'enemy'))
+            self.units.append(Mage(28, 0, 'enemy'))
+            self.units.append(Mage(28, 1, 'enemy'))
+            self.units.append(Mage(28, 2, 'enemy'))
+            self.units.append(Darkmage(29, 0, 'enemy'))
+            self.units.append(Darkmage(29, 1, 'enemy'))
+            self.units.append(Darkmage(29, 0, 'enemy'))
+            self.units.append(Darkmage(29, 1, 'enemy'))
+        elif self.current_level == 22:
+            # Part 4
+            self.units.append(Knight(24, 0, 'enemy'))
+            self.units.append(Knight(24, 1, 'enemy'))
+            self.units.append(Knight(24, 2, 'enemy'))
+            self.units.append(Knight(24, 3, 'enemy'))
+            self.units.append(Horsearcher(25, 0, 'enemy'))
+            self.units.append(Horsearcher(25, 1, 'enemy'))
+            self.units.append(Horsearcher(25, 2, 'enemy'))
+            self.units.append(Horsearcher(25, 3, 'enemy'))
+            self.units.append(Soldier(26, 0, 'enemy'))
+            self.units.append(Soldier(26, 1, 'enemy'))
+            self.units.append(Soldier(26, 2, 'enemy'))
+            self.units.append(Soldier(26, 3, 'enemy'))
+            self.units.append(Mage(27, 0, 'enemy'))
+            self.units.append(Mage(27, 1, 'enemy'))
+            self.units.append(Mage(27, 2, 'enemy'))
+            self.units.append(Ballistician(28, 0, 'enemy'))
+            self.units.append(Ballistician(28, 1, 'enemy'))
+            self.units.append(Ballistician(28, 2, 'enemy'))
+            self.units.append(Darkmage(29, 0, 'enemy'))
+            self.units.append(Darkmage(29, 1, 'enemy'))
             
 
         # Set enemy levels based on current part (skip bosses)
@@ -275,8 +363,10 @@ class GameState:
                     unit.set_level(1)
                 elif self.current_level <= 11:  # Part 2
                     unit.set_level(2)
-                else:  # Part 3
+                elif self.current_level <= 17:  # Part 3
                     unit.set_level(3)
+                else:  # Part 4
+                    unit.set_level(4)
         
         # Apply specific level progression for player units in Part 1, Part 2 and Part 3
         if self.current_level <= 5:  # Part 1 levels
@@ -759,11 +849,19 @@ class GameState:
 
     def update(self, dt):
         # Handle victory timer for level progression (skip boss levels)
-        if self.game_over and self.victory and hasattr(self, 'victory_timer') and self.current_level not in [5, 11]:
+        if self.game_over and self.victory and hasattr(self, 'victory_timer') and self.current_level not in [5, 11, 17]:
             self.victory_timer -= dt
             if self.victory_timer <= 0:
                 self.next_level()
                 return
+        
+        # Handle level 17 story trigger
+        if self.game_over and self.victory and self.current_level == 17:
+            # Show story for Part 4 transition
+            if not hasattr(self, 'story_triggered'):
+                self.story_triggered = True
+                # The core game will handle the story display
+                return True  # Signal to show story
         
         # Handle defeat - stop game updates when Tristan is defeated
         if self.game_over and not self.victory:

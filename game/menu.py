@@ -9,7 +9,7 @@ class HomeScreen:
         self.height = screen.get_height()
         self.running = True
         self.selected_option = None
-        self.options = ["Part 1", "Part 2", "Part 3", "Instructions", "Exit"]
+        self.options = ["Part 1", "Part 2", "Part 3", "Part 4", "Instructions", "Exit"]
         
         # Auto-play story timer
         self.story_timer = 0.0
@@ -307,9 +307,11 @@ class HomeScreen:
                                 return "Part 2"
                             elif self.selected_option == 2:  # Part 3
                                 return "Part 3"
-                            elif self.selected_option == 3:  # Instructions
+                            elif self.selected_option == 3:  # Part 4
+                                return "Part 4"
+                            elif self.selected_option == 4:  # Instructions
                                 return "instructions"
-                            elif self.selected_option == 4:  # Exit
+                            elif self.selected_option == 5:  # Exit
                                 return "exit"
                     elif event.key == pygame.K_ESCAPE:
                         return "exit"
@@ -337,9 +339,11 @@ class HomeScreen:
                                 return "Part 2"
                             elif i == 2:  # Part 3
                                 return "Part 3"
-                            elif i == 3:  # Instructions
+                            elif i == 3:  # Part 4
+                                return "Part 4"
+                            elif i == 4:  # Instructions
                                 return "instructions"
-                            elif i == 4:  # Exit
+                            elif i == 5:  # Exit
                                 return "exit"
                             break
             elif event.type == pygame.MOUSEMOTION:
@@ -390,17 +394,10 @@ class HomeScreen:
                 "• Click red tiles to attack enemies",
                 "• Press SPACE to end your turn",
                 "",
-                "BATTLEFIELD MODES:",
-                "• Original: Classic 12x8 grid, no scrolling",
-                "• Expanded: Large 24x16 grid with scrolling",
-                "• In Expanded mode, use WASD or Arrow keys to scroll",
-                "",
                 "GAMEPLAY:",
                 "• Your units (blue) fight enemies (red)",
                 "• Each unit has movement and attack points",
                 "• Defeat all enemies to advance to next level",
-                "",
-                "Press ESC to return to main menu"
             ]
             
             y_offset = 140
@@ -443,6 +440,8 @@ class HomeScreen:
                 return "Part 2"
             elif action == "Part 3":
                 return "Part 3"
+            elif action == "Part 4":
+                return "Part 4"
             elif action == "instructions":
                 result = self.show_instructions()
                 if result == "exit":

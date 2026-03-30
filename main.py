@@ -31,6 +31,10 @@ def main():
             # Start directly at level 12 with ultra-expanded battlefield
             game = Game(screen=screen, width=12, height=24, starting_level=12)
             game.enable_scrolling = True
+        elif game_mode == "Part 4":
+            # Start directly at level 18 with 30x8 battlefield
+            game = Game(screen=screen, width=30, height=8, starting_level=18)
+            game.enable_scrolling = True
         else:
             # Default to original for safety
             game = Game(screen=screen, width=12, height=8)
