@@ -87,10 +87,10 @@ class GameState:
         from classes.unit import KNIGHTFALL_MODE
         import classes.unit as unit_module
 
-        # Global mode flags
-        DOUBLE_XP_ENABLED = False
-        KNIGHTFALL_MODE = False
-        PIKACHU_MODE = False
+        # Use global flags from unit module
+        DOUBLE_XP_ENABLED = unit_module.DOUBLE_XP_ENABLED
+        KNIGHTFALL_MODE = unit_module.KNIGHTFALL_MODE
+        PIKACHU_MODE = unit_module.PIKACHU_MODE
         
         # Check for PIKACHU mode at start of setup
         if unit_module.PIKACHU_MODE:
@@ -115,7 +115,7 @@ class GameState:
         if self.current_level == 1:
             # PI 3.14 mode - Start with Pikachu that has level ups
             self.units.append(Tristan(2, 2, 'player'))
-            self.units.append(Pikachu(2, 3, 'player'))  # Right under Tristan
+            self.units.append(Pikachu.create_for_part(2, 3, 'player', 1))  # Right under Tristan
             self.units.append(Archer(3, 2, 'player', "Lusia"))
             self.units.append(Mage(4, 2, 'player', "Wen"))
         else:
@@ -128,16 +128,9 @@ class GameState:
             
             # Add Pikachu to all levels if PIKACHU_MODE is enabled
             if unit_module.PIKACHU_MODE:
-                # Position Pikachu right under Tristan
-                pikachu = Pikachu(2, 3, 'player')  # Right under Tristan at (2,2)
-                self.units.append(pikachu)
-            else:
-            # For levels > 1, create units with default progression
-            # They will be restored from saved progress in next_level()
-             tristan = Tristan(2, 2, 'player')
-            archer = Archer(3, 2, 'player', "Lusia")
-            mage = Mage(4, 2, 'player', "Wen")
-            horse = Horse(5, 2, 'player', "Marcus")    
+                # Position Pikachu right under Tristan with appropriate level for the part
+                pikachu = Pikachu.create_for_part(2, 3, 'player', self.current_level)  # Right under Tristan at (2,2)
+                self.units.append(pikachu)    
             
             # Level-based unit additions
             if self.current_level >= 18:  # Level 18+ - Part 4: get ALL units including King and Soldiers
@@ -202,6 +195,12 @@ class GameState:
                 soldier2 = Soldier(1, 33, 'player', "Leo")  # Soldiers closer to group
                 
                 all_units = [tristan, archer, mage, horse, srodman, knight, healer, horsearcher, ballistician, knig, great_sage, soldier1, soldier2]
+                
+                # Add Pikachu if PIKACHU_MODE is enabled
+                if unit_module.PIKACHU_MODE:
+                    pikachu = Pikachu.create_for_part(3, 32, 'player', 23)  # Position Pikachu near Tristan
+                    all_units.append(pikachu)
+                
                 self.units.extend(all_units)
             
 

@@ -373,6 +373,16 @@ class Game:
                 "",
                 "Before Tristan was King the war started and King Vens",
                 "worked as hard as he could to stop the war."
+            ],
+            'Pikachu': [
+                "Pikachu The Thunder Companion",
+                "",
+                "After the Great War, Pikachu remain by",
+                "Tristan's side as his loyal companion.",
+                "",
+                "No one really knows what he is or where he came from.",
+                "But everyone knows he is a powerful, caring, cute theng."
+                "Everyone loves him."
             ]
         }
         

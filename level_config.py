@@ -31,6 +31,28 @@ CLASS_LEVELS = {
         19: {"hp": 39, "atk": 23, "move": 8, "range": 1},
         20: {"hp": 42, "atk": 27, "move": 9, "range": 1}
     },
+    "Pikachu": {
+        1: {"hp": 8, "atk": 4, "move": 4, "range": 3},
+        2: {"hp": 10, "atk": 5, "move": 4, "range": 3},
+        3: {"hp": 12, "atk": 6, "move": 5, "range": 4},
+        4: {"hp": 14, "atk": 7, "move": 5, "range": 4},
+        5: {"hp": 16, "atk": 8, "move": 5, "range": 5},
+        6: {"hp": 18, "atk": 9, "move": 6, "range": 5},
+        7: {"hp": 20, "atk": 10, "move": 6, "range": 5},
+        8: {"hp": 22, "atk": 11, "move": 6, "range": 6},
+        9: {"hp": 24, "atk": 12, "move": 6, "range": 6},
+        10: {"hp": 26, "atk": 13, "move": 7, "range": 6},
+        11: {"hp": 28, "atk": 14, "move": 7, "range": 7},
+        12: {"hp": 30, "atk": 15, "move": 7, "range": 7},
+        13: {"hp": 32, "atk": 16, "move": 7, "range": 7},
+        14: {"hp": 34, "atk": 17, "move": 7, "range": 7},
+        15: {"hp": 36, "atk": 18, "move": 8, "range": 8},
+        16: {"hp": 38, "atk": 19, "move": 8, "range": 8},
+        17: {"hp": 40, "atk": 20, "move": 8, "range": 8},
+        18: {"hp": 42, "atk": 21, "move": 8, "range": 8},
+        19: {"hp": 44, "atk": 22, "move": 8, "range": 8},
+        20: {"hp": 46, "atk": 23, "move": 9, "range": 9}
+    },
     
     "Archer": {
         1: {"hp": 8, "atk": 2, "move": 3, "range": 3},

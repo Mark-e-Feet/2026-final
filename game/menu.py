@@ -26,6 +26,22 @@ class HomeScreen:
         self.code_input = ""
         self.code_font = pygame.font.SysFont(None, 36)
         
+        # Track active codes
+        self.active_codes = set()
+        self.update_active_codes()
+    
+    def update_active_codes(self):
+        """Update active codes based on current global flags"""
+        import classes.unit as unit_module
+        self.active_codes.clear()
+        
+        if unit_module.DOUBLE_XP_ENABLED:
+            self.active_codes.add("WWW.RRR.EEE")
+        if unit_module.KNIGHTFALL_MODE:
+            self.active_codes.add("K.K.23")
+        if unit_module.PIKACHU_MODE:
+            self.active_codes.add("PI 3.14")
+        
         # Fonts
         self.title_font = pygame.font.SysFont(None, 72)
         self.option_font = pygame.font.SysFont(None, 48)
@@ -312,16 +328,30 @@ class HomeScreen:
                         self.entering_code = False
                         self.code_input = ""
                     elif event.key == pygame.K_RETURN:
-                            if self.code_input.upper() == "LEVELS HT":
+                            code_input_upper = self.code_input.upper()
+                            if code_input_upper == "LEVELS HT":
                                 return "level_select"
-                            elif self.code_input.upper() == "WWW.RRR.EEE":
-                                return "double_xp"
-                            elif self.code_input.upper() == "K.K.23":
-                                return "K.K.23"
-                            elif self.code_input.upper() == "PI 3.14":
-                                return "PI 3.14"
+                            elif code_input_upper == "WWW.RRR.EEE":
+                                import classes.unit as unit_module
+                                unit_module.DOUBLE_XP_ENABLED = True
+                                self.show_code_confirmation("Double XP Enabled!")
+                                self.code_input = ""
+                                # Stay in code screen to allow more codes
+                            elif code_input_upper == "K.K.23":
+                                import classes.unit as unit_module
+                                unit_module.KNIGHTFALL_MODE = True
+                                self.show_code_confirmation("Knight Mode Activated!")
+                                self.code_input = ""
+                                # Stay in code screen to allow more codes
+                            elif code_input_upper == "PI 3.14":
+                                import classes.unit as unit_module
+                                unit_module.PIKACHU_MODE = True
+                                self.show_code_confirmation("Pikachu has been added to your party!")
+                                self.code_input = ""
+                                # Stay in code screen to allow more codes
                             else:
-                                # Wrong code - clear input
+                                # Wrong code - show error and clear input
+                                self.show_code_confirmation("Invalid Code!")
                                 self.code_input = ""
                     elif event.key == pygame.K_BACKSPACE:
                         self.code_input = self.code_input[:-1]
@@ -518,12 +548,6 @@ class HomeScreen:
                 return "Part 3"
             elif action == "Part 4":
                 return "Part 4"
-            elif action == "PI 3.14":
-                # Enable Pikachu mode and return to menu for battle selection
-                import classes.unit as unit_module
-                unit_module.PIKACHU_MODE = True
-                self.show_code_confirmation("Pikachu has been added to your party!")
-                return "PI.3.14_enabled"
             elif action == "instructions":
                 result = self.show_instructions()
                 if result == "exit":
@@ -532,21 +556,6 @@ class HomeScreen:
                 result = self.show_level_select()
                 if result:
                     return result
-            elif action == "double_xp":
-                # Set double XP flag and return to menu
-                # Show temporary confirmation message
-                self.show_code_confirmation("Double XP Enabled!")
-                return "double_xp_enabled"
-            elif action == "K.K.23":
-                # Set knight mode flag and return to menu
-                # Show temporary confirmation message
-                self.show_code_confirmation("Knight Mode Activated!")
-                return "K.K.23_enabled"
-            elif action == "PI.3.14":
-                # Set Pikachu mode flag and return to menu
-                # Show temporary confirmation message
-                self.show_code_confirmation("Pikachu Added to Party!")
-                return "PI.3.14_enabled"
             
             self.draw()
             pygame.display.flip()
@@ -586,13 +595,16 @@ class HomeScreen:
     
     def draw_code_input(self):
         """Draw code input screen"""
+        # Update active codes display
+        self.update_active_codes()
+        
         # Title
         title_text = self.title_font.render("Enter Code", True, self.title_color)
-        title_rect = title_text.get_rect(center=(self.width // 2, 150))
+        title_rect = title_text.get_rect(center=(self.width // 2, 120))
         self.screen.blit(title_text, title_rect)
         
         # Code input field
-        input_rect = pygame.Rect(self.width // 2 - 200, 250, 400, 60)
+        input_rect = pygame.Rect(self.width // 2 - 200, 200, 400, 60)
         pygame.draw.rect(self.screen, (40, 40, 50), input_rect)
         pygame.draw.rect(self.screen, self.option_color, input_rect, 2)
         
@@ -601,13 +613,30 @@ class HomeScreen:
         code_rect = code_text.get_rect(center=input_rect.center)
         self.screen.blit(code_text, code_rect)
         
+        # Show active codes
+        if self.active_codes:
+            active_title = self.instruction_font.render("Active Codes:", True, (100, 255, 100))
+            active_rect = active_title.get_rect(center=(self.width // 2, 300))
+            self.screen.blit(active_title, active_rect)
+            
+            y_offset = 330
+            for code in sorted(self.active_codes):
+                code_display = self.instruction_font.render(f"  {code}", True, (150, 255, 150))
+                code_display_rect = code_display.get_rect(center=(self.width // 2, y_offset))
+                self.screen.blit(code_display, code_display_rect)
+                y_offset += 30
+        else:
+            no_codes = self.instruction_font.render("No active codes", True, (200, 200, 200))
+            no_codes_rect = no_codes.get_rect(center=(self.width // 2, 330))
+            self.screen.blit(no_codes, no_codes_rect)
+        
         # Instructions
         inst_text = self.instruction_font.render("Enter code to unlock features", True, self.text_color)
-        inst_rect = inst_text.get_rect(center=(self.width // 2, 350))
+        inst_rect = inst_text.get_rect(center=(self.width // 2, 450))
         self.screen.blit(inst_text, inst_rect)
         
         back_text = self.instruction_font.render("Press ESC to go back", True, self.text_color)
-        back_rect = back_text.get_rect(center=(self.width // 2, 400))
+        back_rect = back_text.get_rect(center=(self.width // 2, 500))
         self.screen.blit(back_text, back_rect)
     
     def show_level_select(self):
