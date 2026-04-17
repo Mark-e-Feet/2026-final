@@ -150,6 +150,7 @@ class Game:
             self.character_images['Horsearcher_P'] = pygame.image.load("assets/horsearcher P.png")  # Using new horsearcher P image
             self.character_images['Ballistician_P'] = pygame.image.load("assets/ballistician P.png")  # Using new ballistician P image
             self.character_images['Great_sage_P'] = pygame.image.load("assets/great_sage P.png")
+            self.character_images['Pikachu_P'] = pygame.image.load("assets/pikachu.png")  # Load Pikachu image
 
             # Load enemy character images
             self.character_images['Bandit_E'] = pygame.image.load("assets/bandit E.png")
@@ -468,6 +469,15 @@ class Game:
         except pygame.error as e:
             print(f"Could not load fire magic sound: {e}")
             self.fire_magic_sound = None
+        
+        # Initialize thunder sound for Pikachu
+        try:
+            self.thunder_sound = pygame.mixer.Sound("assets/thunder.mp3")
+            self.thunder_sound.set_volume(1.0)  # Maximum volume
+            print("Thunder sound loaded successfully")
+        except pygame.error as e:
+            print(f"Could not load thunder sound: {e}")
+            self.thunder_sound = None
     
     def play_phase_music(self):
         """Play appropriate music based on current phase and level"""
@@ -618,6 +628,9 @@ class Game:
         # Units that should play fire magic sound when attacking
         magic_units = ['Mage', 'Darkmage', 'Boss2', 'Great_sage']
         
+        # Units that should play thunder sound when attacking
+        thunder_units = ['Pikachu']
+        
         # Play slash sound for melee units
         if hasattr(self, 'slash_sound') and self.slash_sound and attacker_class_name in slash_units:
             self.slash_sound.play()
@@ -632,6 +645,11 @@ class Game:
         elif hasattr(self, 'fire_magic_sound') and self.fire_magic_sound and attacker_class_name in magic_units:
             self.fire_magic_sound.play()
             print(f"Playing fire magic sound for {attacker_class_name}")
+        
+        # Play thunder sound for Pikachu
+        elif hasattr(self, 'thunder_sound') and self.thunder_sound and attacker_class_name in thunder_units:
+            self.thunder_sound.play()
+            print(f"Playing thunder sound for {attacker_class_name}")
 
     def get_level_name(self):
         """Get display name for current level"""

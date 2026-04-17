@@ -9,7 +9,7 @@ class HomeScreen:
         self.height = screen.get_height()
         self.running = True
         self.selected_option = None
-        self.options = ["Part 1", "Part 2", "Part 3", "Part 4", "Codes", "Instructions", "Exit"]
+        self.options = ["Part 1", "Part 2", "Part 3", "Part 4", "PI 3.14", "Codes", "Instructions", "Exit"]
         
         # Auto-play story timer
         self.story_timer = 0.0
@@ -318,6 +318,8 @@ class HomeScreen:
                                 return "double_xp"
                             elif self.code_input.upper() == "K.K.23":
                                 return "K.K.23"
+                            elif self.code_input.upper() == "PI 3.14":
+                                return "PI 3.14"
                             else:
                                 # Wrong code - clear input
                                 self.code_input = ""
@@ -516,6 +518,12 @@ class HomeScreen:
                 return "Part 3"
             elif action == "Part 4":
                 return "Part 4"
+            elif action == "PI 3.14":
+                # Enable Pikachu mode and return to menu for battle selection
+                import classes.unit as unit_module
+                unit_module.PIKACHU_MODE = True
+                self.show_code_confirmation("Pikachu has been added to your party!")
+                return "PI.3.14_enabled"
             elif action == "instructions":
                 result = self.show_instructions()
                 if result == "exit":
@@ -534,6 +542,11 @@ class HomeScreen:
                 # Show temporary confirmation message
                 self.show_code_confirmation("Knight Mode Activated!")
                 return "K.K.23_enabled"
+            elif action == "PI.3.14":
+                # Set Pikachu mode flag and return to menu
+                # Show temporary confirmation message
+                self.show_code_confirmation("Pikachu Added to Party!")
+                return "PI.3.14_enabled"
             
             self.draw()
             pygame.display.flip()

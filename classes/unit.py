@@ -8,6 +8,9 @@ DOUBLE_XP_ENABLED = False
 # Global flag for knight transformation mode
 KNIGHTFALL_MODE = False
 
+# Global flag for Pikachu mode
+PIKACHU_MODE = False
+
 
 @dataclass
 class Unit:

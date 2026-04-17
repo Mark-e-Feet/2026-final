@@ -18,6 +18,7 @@ from classes.Darkmage import Darkmage
 from classes.Boss3 import Boss3
 from classes.Final_Boss import Final_Boss
 from classes.Knig import Knig
+from classes.Pikachu import Pikachu
 from classes.Great_sage import Great_sage
 
 class GameState:
@@ -85,6 +86,15 @@ class GameState:
         # Check for KNIGHTFALL mode at start of setup
         from classes.unit import KNIGHTFALL_MODE
         import classes.unit as unit_module
+
+        # Global mode flags
+        DOUBLE_XP_ENABLED = False
+        KNIGHTFALL_MODE = False
+        PIKACHU_MODE = False
+        
+        # Check for PIKACHU mode at start of setup
+        if unit_module.PIKACHU_MODE:
+            print("Pikachu mode enabled! Pikachu will join your party.")
         if KNIGHTFALL_MODE or unit_module.KNIGHTFALL_MODE:
             print("================================")
             print("     KNIGHT MODE ACTIVE     ")
@@ -103,13 +113,28 @@ class GameState:
         
         # Player units (preserve progression across levels)
         if self.current_level == 1:
+            # PI 3.14 mode - Start with Pikachu that has level ups
             self.units.append(Tristan(2, 2, 'player'))
+            self.units.append(Pikachu(2, 3, 'player'))  # Right under Tristan
             self.units.append(Archer(3, 2, 'player', "Lusia"))
             self.units.append(Mage(4, 2, 'player', "Wen"))
         else:
             # For levels > 1, create units with default progression
             # They will be restored from saved progress in next_level()
             tristan = Tristan(2, 2, 'player')
+            archer = Archer(3, 2, 'player', "Lusia")
+            mage = Mage(4, 2, 'player', "Wen")
+            horse = Horse(5, 2, 'player', "Marcus")    
+            
+            # Add Pikachu to all levels if PIKACHU_MODE is enabled
+            if unit_module.PIKACHU_MODE:
+                # Position Pikachu right under Tristan
+                pikachu = Pikachu(2, 3, 'player')  # Right under Tristan at (2,2)
+                self.units.append(pikachu)
+            else:
+            # For levels > 1, create units with default progression
+            # They will be restored from saved progress in next_level()
+             tristan = Tristan(2, 2, 'player')
             archer = Archer(3, 2, 'player', "Lusia")
             mage = Mage(4, 2, 'player', "Wen")
             horse = Horse(5, 2, 'player', "Marcus")    

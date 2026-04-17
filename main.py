@@ -70,10 +70,18 @@ def main():
             game = Game(screen=screen, width=30, height=8, starting_level=18)
             game.enable_scrolling = True
             game.run()
+        elif game_mode == "PI 3.14":
+            # Start with Pikachu class that has level ups
+            game = Game(screen=screen, width=15, height=35, starting_level=1)
+            game.enable_scrolling = True
+            game.run()
         elif game_mode == "double_xp_enabled":
             # Enable double XP mode globally
             unit_module.DOUBLE_XP_ENABLED = True
             print("Double XP mode enabled! You will now receive 2x experience from defeating enemies.")
+            continue  # Return to home screen
+        elif game_mode == "PI.3.14_enabled":
+            # Pikachu mode already enabled, just return to menu
             continue  # Return to home screen
         elif game_mode and game_mode.startswith("level_"):
             # Extract level number from "level_X" format
