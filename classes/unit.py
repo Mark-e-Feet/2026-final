@@ -1,4 +1,12 @@
 from dataclasses import dataclass
+from level_config import get_exp_required, get_class_stats, MAX_LEVEL
+
+
+# Global flag for double XP mode
+DOUBLE_XP_ENABLED = False
+
+# Global flag for knight transformation mode
+KNIGHTFALL_MODE = False
 
 
 @dataclass
@@ -6,6 +14,7 @@ class Unit:
     x: int
     y: int
     team: str
+    name: str = ""
     move: int = 3
     hp: int = 10
     max_hp: int = 10
@@ -49,6 +58,10 @@ class Unit:
         # Initialize level up announcement system
         self.level_up_announcement = False
         self.level_up_timer = 0.0
+        
+        # Healing system attributes
+        self.heal_range: int = 1  # Healers can heal adjacent units
+        self.heals_remaining: int = 1  # Healers get 1 heal per turn
 
     def spend_ap(self, cost: int) -> bool:
         if cost <= 0:
@@ -69,6 +82,24 @@ class Unit:
 
     def can_attack(self) -> bool:
         return self.attacks_remaining > 0
+    
+    def can_heal(self) -> bool:
+        return self.heals_remaining > 0
+    
+    def spend_heal(self) -> bool:
+        if self.can_heal():
+            self.heals_remaining -= 1
+            return True
+        return False
+    
+    def reset_heals(self):
+        self.heals_remaining = 1
+    
+    def get_heal_amount(self):
+        """Calculate heal amount based on level (2 HP + 1 HP every 3 levels)"""
+        base_heal = 2
+        level_bonus = (self.level - 1) // 3  # +1 HP every 3 levels
+        return base_heal + level_bonus
 
     def spend_attack(self) -> bool:
         if self.can_attack():
@@ -80,6 +111,7 @@ class Unit:
         self.ap = self.max_ap
         self.moves_remaining = self.move
         self.attacks_remaining = 1
+        self.reset_heals()
 
     def take_damage(self, amount: int):
         self.hp -= amount
@@ -93,6 +125,10 @@ class Unit:
         """Add experience points and check for level up"""
         if self.team != 'player':  # Only player units can level up
             return
+        
+        # Apply double XP if enabled
+        if DOUBLE_XP_ENABLED:
+            amount *= 2
             
         self.exp += amount
         
@@ -101,37 +137,31 @@ class Unit:
             self.level_up()
 
     def level_up(self):
-        """Increase unit level and improve stats"""
+        """Increase unit level and improve stats using configuration system"""
+        # Check level cap
+        if self.level >= MAX_LEVEL:
+            return  # Can't level up anymore
+            
         self.level += 1
         self.exp -= self.exp_to_next_level
-        self.exp_to_next_level = int(self.exp_to_next_level * 1.5)  # Increase exp requirement
+        self.exp_to_next_level = get_exp_required(self.level + 1)
         
-        # Check if unit has enhanced stats from Part 2/Part 3
-        enhanced_stats = getattr(self, '_enhanced_stats', False)
+        # Get new stats from configuration
+        class_name = self.__class__.__name__
+        new_stats = get_class_stats(class_name, self.level)
         
-        # Improve stats - use enhanced base if available, otherwise use normal calculation
-        if enhanced_stats:
-            # Unit has enhanced stats from Part 2/Part 3, use normal level-up formula
-            hp_increase = max(1, int(self.base_hp * 0.1))  # 10% of base HP
-            atk_increase = max(1, int(self.base_atk * 0.15))  # 15% of base attack
-        else:
-            # Normal unit - use enhanced base stats
-            hp_increase = max(1, int(self.hp * 0.1))  # 10% of current HP
-            atk_increase = max(1, int(self.atk * 0.15))  # 15% of current attack
-            
-        self.base_hp += hp_increase
-        self.base_atk += atk_increase
-        
-        # Increase movement every 3 levels
-        if self.level % 3 == 0:
-            self.base_move += 1
-        
-        # Apply ALL new stats - this was the missing part!
-        self.max_hp = self.base_hp
+        # Apply new stats
+        self.max_hp = new_stats["hp"]
         self.hp = self.max_hp  # Full heal on level up
-        self.atk = self.base_atk
-        self.move = self.base_move
+        self.atk = new_stats["atk"]
+        self.move = new_stats["move"]
+        self.atk_range = new_stats["range"]
         self.moves_remaining = self.move
+        
+        # Update base stats for future calculations
+        self.base_hp = self.max_hp
+        self.base_atk = self.atk
+        self.base_move = self.move
         
         # Set level up announcement flag
         self.level_up_announcement = True
@@ -144,28 +174,32 @@ class Unit:
         return base_exp + level_bonus
 
     def set_level(self, target_level: int):
-        """Set unit to a specific level (for enemy units)"""
+        """Set unit to a specific level using configuration system"""
         if target_level < 1:
-            return
+            target_level = 1
+        elif target_level > MAX_LEVEL:
+            target_level = MAX_LEVEL
             
         # Set level directly
         self.level = target_level
         
-        # Calculate stats based on target level
-        # HP: +10% per level
-        hp_bonus = (target_level - 1) * int(self.base_hp * 0.1)
-        self.max_hp = self.base_hp + hp_bonus
+        # Get stats from configuration
+        class_name = self.__class__.__name__
+        new_stats = get_class_stats(class_name, target_level)
+        
+        # Apply new stats
+        self.max_hp = new_stats["hp"]
         self.hp = self.max_hp  # Full health
-        
-        # Attack: +15% per level
-        atk_bonus = (target_level - 1) * int(self.base_atk * 0.15)
-        self.atk = self.base_atk + atk_bonus
-        
-        # Movement: +1 every 3 levels
-        move_bonus = ((target_level - 1) // 3)
-        self.move = self.base_move + move_bonus
+        self.atk = new_stats["atk"]
+        self.move = new_stats["move"]
+        self.atk_range = new_stats["range"]
         self.moves_remaining = self.move
+        
+        # Update base stats for future calculations
+        self.base_hp = self.max_hp
+        self.base_atk = self.atk
+        self.base_move = self.move
         
         # Set experience for current level
         self.exp = 0
-        self.exp_to_next_level = target_level * 10
+        self.exp_to_next_level = get_exp_required(target_level + 1)

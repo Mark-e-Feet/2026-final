@@ -9,7 +9,7 @@ class HomeScreen:
         self.height = screen.get_height()
         self.running = True
         self.selected_option = None
-        self.options = ["Part 1", "Part 2", "Part 3", "Part 4", "Instructions", "Exit"]
+        self.options = ["Part 1", "Part 2", "Part 3", "Part 4", "Codes", "Instructions", "Exit"]
         
         # Auto-play story timer
         self.story_timer = 0.0
@@ -20,6 +20,11 @@ class HomeScreen:
         # Story scrolling
         self.story_scroll_offset = 0.0  # Continuous scroll offset
         self.scroll_speed = 0.1  # Pixels per frame for smooth scrolling
+        
+        # Code input system
+        self.entering_code = False
+        self.code_input = ""
+        self.code_font = pygame.font.SysFont(None, 36)
         
         # Fonts
         self.title_font = pygame.font.SysFont(None, 72)
@@ -50,6 +55,9 @@ class HomeScreen:
         # Show story if timer reached
         if self.showing_story:
             self.draw_story()
+        elif self.entering_code:
+            # Code input screen
+            self.draw_code_input()
         else:
             # Normal menu display
             # Title
@@ -62,27 +70,68 @@ class HomeScreen:
             subtitle_rect = subtitle_text.get_rect(center=(self.width // 2, 160))
             self.screen.blit(subtitle_text, subtitle_rect)
             
-            # Menu options
-            start_y = 300
-            for i, option in enumerate(self.options):
-                # Determine color: selected/hover > default
-                if (self.selected_option is not None and i == self.selected_option) or i == self.hovered_option:
-                    color = self.selected_color
-                else:
-                    color = self.option_color
-                    
-                option_text = self.option_font.render(option, True, color)
-                option_rect = option_text.get_rect(center=(self.width // 2, start_y + i * 80))
-                self.screen.blit(option_text, option_rect)
+            # Menu options in 3x2 grid
+            # Part 1 (top-left)
+            option_text = self.option_font.render("Part 1", True, 
+                self.selected_color if (self.selected_option is not None and self.selected_option == 0) or self.hovered_option == 0 else self.option_color)
+            option_rect = option_text.get_rect(center=(self.width // 2 - 200, 280))
+            self.screen.blit(option_text, option_rect)
+            
+            # Part 2 (top-center)
+            option_text = self.option_font.render("Part 2", True,
+                self.selected_color if (self.selected_option is not None and self.selected_option == 1) or self.hovered_option == 1 else self.option_color)
+            option_rect = option_text.get_rect(center=(self.width // 2, 280))
+            self.screen.blit(option_text, option_rect)
+            
+            # Part 3 (top-right)
+            option_text = self.option_font.render("Part 3", True,
+                self.selected_color if (self.selected_option is not None and self.selected_option == 2) or self.hovered_option == 2 else self.option_color)
+            option_rect = option_text.get_rect(center=(self.width // 2 + 200, 280))
+            self.screen.blit(option_text, option_rect)
+            
+            # Part 4 (middle-left)
+            option_text = self.option_font.render("Part 4", True,
+                self.selected_color if (self.selected_option is not None and self.selected_option == 3) or self.hovered_option == 3 else self.option_color)
+            option_rect = option_text.get_rect(center=(self.width // 2 - 200, 360))
+            self.screen.blit(option_text, option_rect)
+            
+            # Codes (middle-center)
+            option_text = self.option_font.render("Codes", True,
+                self.selected_color if (self.selected_option is not None and self.selected_option == 4) or self.hovered_option == 4 else self.option_color)
+            option_rect = option_text.get_rect(center=(self.width // 2, 360))
+            self.screen.blit(option_text, option_rect)
+            
+            # Instructions (middle-right)
+            option_text = self.option_font.render("Instructions", True,
+                self.selected_color if (self.selected_option is not None and self.selected_option == 5) or self.hovered_option == 5 else self.option_color)
+            option_rect = option_text.get_rect(center=(self.width // 2 + 200, 360))
+            self.screen.blit(option_text, option_rect)
+            
+            # Exit (bottom center)
+            option_text = self.option_font.render("Exit", True,
+                self.selected_color if (self.selected_option is not None and self.selected_option == 6) or self.hovered_option == 6 else self.option_color)
+            option_rect = option_text.get_rect(center=(self.width // 2, 440))
+            self.screen.blit(option_text, option_rect)
                 
-                # Draw selection indicator for selected or hovered
+                # Draw selection indicators for each option
+            positions = [
+                (self.width // 2 - 200, 280),  # Part 1
+                (self.width // 2, 280),        # Part 2
+                (self.width // 2 + 200, 280),  # Part 3
+                (self.width // 2 - 200, 360),  # Part 4
+                (self.width // 2, 360),        # Codes
+                (self.width // 2 + 200, 360),  # Instructions
+                (self.width // 2, 440)          # Exit
+            ]
+            
+            for i, pos in enumerate(positions):
                 if (self.selected_option is not None and i == self.selected_option) or i == self.hovered_option:
-                    indicator_rect = pygame.Rect(option_rect.left - 40, option_rect.centery - 15, 30, 30)
+                    indicator_rect = pygame.Rect(pos[0] - 100, pos[1] - 24, 200, 48)
                     pygame.draw.rect(self.screen, self.selected_color, indicator_rect, 2)
                     pygame.draw.polygon(self.screen, self.selected_color, [
-                        (indicator_rect.left + 8, indicator_rect.centery),
-                        (indicator_rect.left + 22, indicator_rect.centery - 8),
-                        (indicator_rect.left + 22, indicator_rect.centery + 8)
+                        (pos[0] - 92, pos[1]),
+                        (pos[0] - 78, pos[1] - 8),
+                        (pos[0] - 78, pos[1] + 8)
                     ])
             
             # Story timer indicator
@@ -177,34 +226,6 @@ class HomeScreen:
         
         # Reset clipping region
         self.screen.set_clip(None)
-    
-    def draw_original_preview(self):
-        # Semi-transparent overlay for original battlefield info
-        overlay = pygame.Surface((self.width - 200, 250), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 180))
-        overlay_rect = overlay.get_rect(center=(self.width // 2, self.height // 2 + 50))
-        self.screen.blit(overlay, overlay_rect)
-        
-        info = [
-            "ORIGINAL BATTLEFIELD",
-            "",
-            "• Classic 12x8 grid battlefield",
-            "• Perfect for quick tactical battles",
-            "• No scrolling required",
-            "• Traditional gameplay experience",
-            "",
-            "Recommended for beginners"
-        ]
-        
-        y_offset = overlay_rect.top + 20
-        for line in info:
-            if line == "ORIGINAL BATTLEFIELD":
-                text = self.option_font.render(line, True, self.title_color)
-            else:
-                text = self.instruction_font.render(line, True, self.text_color)
-            text_rect = text.get_rect(center=(self.width // 2, y_offset))
-            self.screen.blit(text, text_rect)
-            y_offset += 25 if line.startswith("•") else 35
 
     def draw_expanded_preview(self):
         # Semi-transparent overlay for expanded battlefield info
@@ -285,6 +306,28 @@ class HomeScreen:
                         self.showing_story = False
                         self.story_timer = 0.0
                         self.story_started = True
+                elif self.entering_code:
+                    # Handle code input
+                    if event.key == pygame.K_ESCAPE:
+                        self.entering_code = False
+                        self.code_input = ""
+                    elif event.key == pygame.K_RETURN:
+                            if self.code_input.upper() == "LEVELS HT":
+                                return "level_select"
+                            elif self.code_input.upper() == "WWW.RRR.EEE":
+                                return "double_xp"
+                            elif self.code_input.upper() == "K.K.23":
+                                return "K.K.23"
+                            else:
+                                # Wrong code - clear input
+                                self.code_input = ""
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.code_input = self.code_input[:-1]
+                    else:
+                        # Add character to input
+                        char = event.unicode
+                        if len(self.code_input) < 15:  # Limit code length
+                            self.code_input += char.upper()
                 else:
                     # Reset story timer on any interaction
                     self.story_timer = 0.0
@@ -309,28 +352,47 @@ class HomeScreen:
                                 return "Part 3"
                             elif self.selected_option == 3:  # Part 4
                                 return "Part 4"
-                            elif self.selected_option == 4:  # Instructions
+                            elif self.selected_option == 4:  # Codes
+                                self.entering_code = True
+                                self.code_input = ""
+                            elif self.selected_option == 5:  # Instructions
                                 return "instructions"
-                            elif self.selected_option == 5:  # Exit
+                            elif self.selected_option == 6:  # Exit
                                 return "exit"
                     elif event.key == pygame.K_ESCAPE:
-                        return "exit"
+                        if self.entering_code:
+                            self.entering_code = False
+                            self.code_input = ""
+                        else:
+                            return "exit"
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.showing_story:
                     # Click during story returns to menu
                     self.showing_story = False
                     self.story_timer = 0.0
                     self.story_started = True
+                elif self.entering_code:
+                    # Ignore clicks during code input
+                    pass
                 else:
                     # Reset story timer on mouse interaction
                     self.story_timer = 0.0
                     
                     # Check mouse click on menu options and update selection
                     mouse_x, mouse_y = event.pos
-                    start_y = 300
                     
-                    for i, option in enumerate(self.options):
-                        option_rect = pygame.Rect(self.width // 2 - 100, start_y + i * 80 - 24, 200, 48)
+                    # Define option areas for new layout
+                    option_areas = [
+                        pygame.Rect(self.width // 2 - 300, 256, 200, 48),  # Part 1
+                        pygame.Rect(self.width // 2 - 100, 256, 200, 48),  # Part 2
+                        pygame.Rect(self.width // 2 + 100, 256, 200, 48),  # Part 3
+                        pygame.Rect(self.width // 2 - 300, 336, 200, 48),  # Part 4
+                        pygame.Rect(self.width // 2 - 100, 336, 200, 48), # Codes
+                        pygame.Rect(self.width // 2 + 100, 336, 200, 48), # Instructions
+                        pygame.Rect(self.width // 2 + 300, 336, 200, 48)  # Exit
+                    ]
+                    
+                    for i, option_rect in enumerate(option_areas):
                         if option_rect.collidepoint(mouse_x, mouse_y):
                             self.selected_option = i  # Update selection on click
                             if i == 0:  # Part 1
@@ -341,20 +403,32 @@ class HomeScreen:
                                 return "Part 3"
                             elif i == 3:  # Part 4
                                 return "Part 4"
-                            elif i == 4:  # Instructions
+                            elif i == 4:  # Codes
+                                self.entering_code = True
+                                self.code_input = ""
+                            elif i == 5:  # Instructions
                                 return "instructions"
-                            elif i == 5:  # Exit
+                            elif i == 6:  # Exit
                                 return "exit"
                             break
             elif event.type == pygame.MOUSEMOTION:
                 if not self.showing_story:
                     # Update hover state based on mouse position
                     mouse_x, mouse_y = event.pos
-                    start_y = 300
+                    
+                    # Define option areas for new layout (same as click detection)
+                    option_areas = [
+                        pygame.Rect(self.width // 2 - 300, 256, 200, 48),  # Part 1
+                        pygame.Rect(self.width // 2 - 100, 256, 200, 48),  # Part 2
+                        pygame.Rect(self.width // 2 + 100, 256, 200, 48),  # Part 3
+                        pygame.Rect(self.width // 2 - 300, 336, 200, 48),  # Part 4
+                        pygame.Rect(self.width // 2 - 100, 336, 200, 48), # Codes
+                        pygame.Rect(self.width // 2 + 100, 336, 200, 48), # Instructions
+                        pygame.Rect(self.width // 2 + 300, 336, 200, 48)  # Exit
+                    ]
                     
                     self.hovered_option = None  # Reset hover
-                    for i, option in enumerate(self.options):
-                        option_rect = pygame.Rect(self.width // 2 - 100, start_y + i * 80 - 24, 200, 48)
+                    for i, option_rect in enumerate(option_areas):
                         if option_rect.collidepoint(mouse_x, mouse_y):
                             self.hovered_option = i
                             break
@@ -417,8 +491,8 @@ class HomeScreen:
     
     def run(self):
         while self.running:
-            # Update story timer if not started and not showing story
-            if not self.story_started and not self.showing_story:
+            # Update story timer if not started and not showing story and not entering code
+            if not self.story_started and not self.showing_story and not self.entering_code:
                 self.story_timer += 1/60  # Assuming 60 FPS
                 if self.story_timer >= self.story_delay:
                     self.showing_story = True
@@ -446,9 +520,147 @@ class HomeScreen:
                 result = self.show_instructions()
                 if result == "exit":
                     return False
+            elif action == "level_select":
+                result = self.show_level_select()
+                if result:
+                    return result
+            elif action == "double_xp":
+                # Set double XP flag and return to menu
+                # Show temporary confirmation message
+                self.show_code_confirmation("Double XP Enabled!")
+                return "double_xp_enabled"
+            elif action == "K.K.23":
+                # Set knight mode flag and return to menu
+                # Show temporary confirmation message
+                self.show_code_confirmation("Knight Mode Activated!")
+                return "K.K.23_enabled"
             
             self.draw()
             pygame.display.flip()
             pygame.time.Clock().tick(60)
         
         return False
+    
+    def show_code_confirmation(self, message):
+        """Show temporary confirmation message"""
+        confirmation_timer = 2.0  # Show for 2 seconds
+        
+        while confirmation_timer > 0:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return "exit"
+            
+            # Calculate delta time
+            dt = 0.016  # Assuming 60 FPS
+            confirmation_timer -= dt
+            
+            # Draw normal menu
+            self.draw()
+            
+            # Draw confirmation overlay
+            overlay = pygame.Surface((400, 100), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 200))
+            overlay_rect = overlay.get_rect(center=(self.width // 2, self.height // 2))
+            self.screen.blit(overlay, overlay_rect)
+            
+            # Draw confirmation text
+            confirm_text = self.title_font.render(message, True, (0, 255, 0))
+            confirm_rect = confirm_text.get_rect(center=(self.width // 2, self.height // 2))
+            self.screen.blit(confirm_text, confirm_rect)
+            
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)
+    
+    def draw_code_input(self):
+        """Draw code input screen"""
+        # Title
+        title_text = self.title_font.render("Enter Code", True, self.title_color)
+        title_rect = title_text.get_rect(center=(self.width // 2, 150))
+        self.screen.blit(title_text, title_rect)
+        
+        # Code input field
+        input_rect = pygame.Rect(self.width // 2 - 200, 250, 400, 60)
+        pygame.draw.rect(self.screen, (40, 40, 50), input_rect)
+        pygame.draw.rect(self.screen, self.option_color, input_rect, 2)
+        
+        # Display entered code
+        code_text = self.code_font.render(self.code_input, True, self.option_color)
+        code_rect = code_text.get_rect(center=input_rect.center)
+        self.screen.blit(code_text, code_rect)
+        
+        # Instructions
+        inst_text = self.instruction_font.render("Enter code to unlock features", True, self.text_color)
+        inst_rect = inst_text.get_rect(center=(self.width // 2, 350))
+        self.screen.blit(inst_text, inst_rect)
+        
+        back_text = self.instruction_font.render("Press ESC to go back", True, self.text_color)
+        back_rect = back_text.get_rect(center=(self.width // 2, 400))
+        self.screen.blit(back_text, back_rect)
+    
+    def show_level_select(self):
+        """Show level selection screen"""
+        selecting = True
+        selected_level = 1
+        
+        while selecting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return "exit"
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return None
+                    elif event.key == pygame.K_RETURN:
+                        return f"level_{selected_level}"
+                    elif event.key == pygame.K_UP:
+                        selected_level = min(23, selected_level + 1)
+                    elif event.key == pygame.K_DOWN:
+                        selected_level = max(1, selected_level - 1)
+                    elif event.key >= pygame.K_1 and event.key <= pygame.K_9:
+                        # Direct number input
+                        level_num = event.key - pygame.K_0
+                        if 1 <= level_num <= 23:
+                            selected_level = level_num
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = event.pos
+                    # Check level number clicks (1-23)
+                    for level in range(1, 24):
+                        level_x = 100 + ((level - 1) % 6) * 100
+                        level_y = 200 + ((level - 1) // 6) * 60
+                        level_rect = pygame.Rect(level_x, level_y, 80, 40)
+                        if level_rect.collidepoint(mouse_x, mouse_y):
+                            selected_level = level
+                            break
+            
+            # Draw level selection screen
+            self.screen.fill(self.bg_color)
+            
+            title_text = self.title_font.render("Select Level", True, self.title_color)
+            title_rect = title_text.get_rect(center=(self.width // 2, 100))
+            self.screen.blit(title_text, title_rect)
+            
+            # Draw level grid (4x6 = 24 levels, but we only have 1-23)
+            for level in range(1, 24):
+                level_x = 100 + ((level - 1) % 6) * 100
+                level_y = 200 + ((level - 1) // 6) * 60
+                
+                # Highlight selected level
+                if level == selected_level:
+                    pygame.draw.rect(self.screen, self.selected_color, 
+                                 pygame.Rect(level_x - 5, level_y - 5, 90, 50), 3)
+                
+                # Draw level box
+                pygame.draw.rect(self.screen, self.option_color, 
+                                 pygame.Rect(level_x, level_y, 80, 40), 2)
+                
+                # Draw level number
+                level_text = self.option_font.render(str(level), True, self.text_color)
+                level_rect = level_text.get_rect(center=(level_x + 40, level_y + 20))
+                self.screen.blit(level_text, level_rect)
+            
+            # Instructions
+            inst_text = self.instruction_font.render("Use Arrow Keys or Mouse to Select, Enter to Start, ESC to Back", True, self.text_color)
+            inst_rect = inst_text.get_rect(center=(self.width // 2, 500))
+            self.screen.blit(inst_text, inst_rect)
+            
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)

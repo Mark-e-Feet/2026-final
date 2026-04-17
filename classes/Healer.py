@@ -13,8 +13,9 @@ class Healer(Unit):
         super().__post_init__()
 
     def heal(self, target_unit):
-        """Heal a target unit for 1 HP"""
+        """Heal a target unit using the healer's level-based healing amount"""
         if target_unit and target_unit.hp < target_unit.max_hp:
-            target_unit.hp = min(target_unit.hp + 1, target_unit.max_hp)
+            heal_amount = self.get_heal_amount()
+            target_unit.hp = min(target_unit.hp + heal_amount, target_unit.max_hp)
             return True
         return False
